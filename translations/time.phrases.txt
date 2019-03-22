@@ -1,8 +1,14 @@
 "Phrases"
 {
-	"Time played"
+	"Past Weeks"
 	{
 		"#format"		"{1:d}"
-		"en"			"You have played {1} hours on this server."
+		"en"			"{1} hours - past two weeks"
+	}
+	
+	"On Record"
+	{
+		"#format"		"{1:d}"
+		"en"			"{1} hours - on record"
 	}
 }
