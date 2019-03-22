@@ -8,7 +8,7 @@ public Plugin myinfo =
     name = "Time played",
     author = "Ilusion9",
     description = "The time spent on server",
-    version = "2.1",
+    version = "2.2",
     url = "https://forums.alliedmods.net/"
 };
 
@@ -22,6 +22,18 @@ public void OnPluginStart()
 	RegConsoleCmd("sm_time", Command_Time);
 }
 
+public void OnMapStart()
+{
+	Transaction data = new Transaction();
+	
+	data.AddQuery("CREATE TEMPORARY TABLE hours_table_temp SELECT steamid, min(date), sum(seconds) FROM time_table WHERE date < CURRENT_DATE - INTERVAL 2 WEEK GROUP BY steamid;");
+	data.AddQuery("DELETE FROM time_table WHERE date < CURRENT_DATE - INTERVAL 2 WEEK;");
+	data.AddQuery("INSERT INTO time_table SELECT * FROM hours_table_temp;");
+	data.AddQuery("DROP TABLE hours_table_temp;");
+	
+	hDatabase.Execute(data);
+}
+
 public void OnClientDisconnect(int client)
 {
 	int steamId = GetSteamAccountID(client);
@@ -30,7 +42,7 @@ public void OnClientDisconnect(int client)
 	{		
 		char query[256];
 		
-		Format(query, sizeof(query), "INSERT INTO time_table (steamid, seconds) VALUES (%d, %d) ON DUPLICATE KEY UPDATE seconds = seconds + VALUES(seconds);", steamId, GetClientMapTime(client));
+		Format(query, sizeof(query), "INSERT INTO time_table (steamid, date, seconds) VALUES (%d, CURRENT_DATE, %d) ON DUPLICATE KEY UPDATE seconds = seconds + VALUES(seconds);", steamId, GetClientMapTime(client));
 		hDatabase.Query(OnFastQuery, query);
 	}
 }
@@ -45,7 +57,7 @@ public Action Command_Time(int client, int args)
 		{
 			char query[256];
 			
-			Format(query, sizeof(query), "SELECT seconds FROM time_table WHERE steamid = %d;", steamId);  
+			Format(query, sizeof(query), "SELECT sum(CASE WHEN date >= CURRENT_DATE - INTERVAL 2 WEEK THEN seconds END), sum(seconds) FROM time_table WHERE steamid = %d;", steamId);  
 			hDatabase.Query(OnGetClientTime, query, GetClientUserId(client));
 		}
 	}	
@@ -59,7 +71,7 @@ public void OnDatabaseConnection(Database db, const char[] error, any data)
 	{
 		hDatabase = db;
 	
-		db.Query(OnFastQuery, "CREATE TABLE IF NOT EXISTS time_table (steamid INT UNSIGNED PRIMARY KEY, seconds INT UNSIGNED);");
+		db.Query(OnFastQuery, "CREATE TABLE IF NOT EXISTS time_table (steamid INT UNSIGNED, date DATE, seconds INT UNSIGNED, PRIMARY KEY (steamid, date));");
 	}
 	else
 	{
@@ -76,10 +88,16 @@ public void OnGetClientTime(Database db, DBResultSet rs, const char[] error, any
 
 		if (client)
 		{
+			int pastTime = GetClientMapTime(client), recordTime = pastTime;
+
 			if (rs.FetchRow())
 			{
-				PrintToChat(client, "%t", "Time played", (rs.FetchInt(0) + GetClientMapTime(client)) / 3600);
+				pastTime += rs.FetchInt(0);
+				recordTime += rs.FetchInt(1);
 			}
+			
+			PrintToChat(client, "%t", "Past Weeks", pastTime / 3600);
+			PrintToChat(client, "%t", "On Record", recordTime / 3600);
 		}
 	}
 	else
