@@ -1,9 +1,9 @@
 # Time played
-This plugin will display statistics of clients time through sm_time command.
+This plugin will display of players activity on the server.
 
 # Database configuration
 ```
-"timestats" 
+"playeractivity" 
 { 
     "driver"            "mysql" 
     "host"                "" 
