@@ -15,7 +15,7 @@ This plugin will display statistics of clients time through sm_time command.
     } 
 ```
 
-# Example
+# Example of output
 ```
 12 minutes - current session
 22 hours - past two weeks
