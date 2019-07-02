@@ -3,7 +3,7 @@ This plugin will display informations of players activity on the server.
 
 # Database configuration
 ```
-"playeractivity" 
+"activity" 
 { 
     "driver"            "mysql" 
     "host"                "" 
