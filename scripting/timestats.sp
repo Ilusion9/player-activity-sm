@@ -17,7 +17,7 @@ Database hDatabase;
 public void OnPluginStart()
 {
 	LoadTranslations("timestats.phrases");
-	Database.Connect(OnDatabaseConnection, "time");
+	Database.Connect(OnDatabaseConnection, "timestats");
 	
 	RegConsoleCmd("sm_time", Command_Time);
 }
