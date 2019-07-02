@@ -120,7 +120,9 @@ public void OnGetClientTime(Database db, DBResultSet rs, const char[] error, any
 			
 			panel.DrawItem("", ITEMDRAW_SPACER);
 			panel.CurrentKey = GetMaxPageItems(panel.Style);
-			panel.DrawItem("Exit", ITEMDRAW_CONTROL);
+			
+			Format(row, sizeof(row), "%t", "time_panel_exit");
+			panel.DrawItem(row, ITEMDRAW_CONTROL);
 			
 			panel.Send(client, Panel_DoNothing, MENU_TIME_FOREVER);
 			delete panel;
