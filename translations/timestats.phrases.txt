@@ -22,4 +22,9 @@
 		"#format"		"{1:d}"
 		"en"			"{1} hours - total"
 	}
+	
+	"time_panel_exit"
+	{
+		"en"			"Exit"
+	}
 }
