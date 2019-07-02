@@ -1,5 +1,5 @@
 # Time played
-This plugin will display the time of clients from the past two weeks and from their first connection on the server through sm_time command. 
+This plugin will display statistics of clients time through sm_time command.
 
 # Example
 ```
