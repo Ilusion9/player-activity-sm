@@ -29,10 +29,10 @@ public void OnMapStart()
 	{
 		Transaction data = new Transaction();
 		
-		data.AddQuery("CREATE TEMPORARY TABLE `activity_table_temp` SELECT steamid, min(date), sum(seconds) FROM `activity_table` WHERE date < CURRENT_DATE - INTERVAL 2 WEEK GROUP BY steamid;");
-		data.AddQuery("DELETE FROM `activity_table` WHERE date < CURRENT_DATE - INTERVAL 2 WEEK;");
-		data.AddQuery("INSERT INTO `activity_table` SELECT * FROM `activity_table_temp`;");
-		data.AddQuery("DROP TABLE `activity_table_temp`;");
+		data.AddQuery("CREATE TEMPORARY TABLE `players_activity_table_temp` SELECT steamid, min(date), sum(seconds) FROM `players_activity_table` WHERE date < CURRENT_DATE - INTERVAL 2 WEEK GROUP BY steamid;");
+		data.AddQuery("DELETE FROM `players_activity_table` WHERE date < CURRENT_DATE - INTERVAL 2 WEEK;");
+		data.AddQuery("INSERT INTO `players_activity_table` SELECT * FROM `players_activity_table_temp`;");
+		data.AddQuery("DROP TABLE `players_activity_table_temp`;");
 		
 		hDatabase.Execute(data);
 	}
@@ -46,7 +46,7 @@ public void OnClientDisconnect(int client)
 	{		
 		char query[256];
 		
-		Format(query, sizeof(query), "INSERT INTO `activity_table` (steamid, date, seconds) VALUES (%d, CURRENT_DATE, %d) ON DUPLICATE KEY UPDATE seconds = seconds + VALUES(seconds);", steamId, GetClientMapTime(client));
+		Format(query, sizeof(query), "INSERT INTO `players_activity_table` (steamid, date, seconds) VALUES (%d, CURRENT_DATE, %d) ON DUPLICATE KEY UPDATE seconds = seconds + VALUES(seconds);", steamId, GetClientMapTime(client));
 		hDatabase.Query(OnFastQuery, query);
 	}
 }
@@ -61,7 +61,7 @@ public Action Command_Time(int client, int args)
 		{
 			char query[256];
 			
-			Format(query, sizeof(query), "SELECT sum(CASE WHEN date >= CURRENT_DATE - INTERVAL 2 WEEK THEN seconds END), sum(seconds) FROM `activity_table` WHERE steamid = %d;", steamId);  
+			Format(query, sizeof(query), "SELECT sum(CASE WHEN date >= CURRENT_DATE - INTERVAL 2 WEEK THEN seconds END), sum(seconds) FROM `players_activity_table` WHERE steamid = %d;", steamId);  
 			hDatabase.Query(OnGetClientTime, query, GetClientUserId(client));
 		}
 	}	
@@ -75,7 +75,7 @@ public void OnDatabaseConnection(Database db, const char[] error, any data)
 	{
 		hDatabase = db;
 	
-		db.Query(OnFastQuery, "CREATE TABLE IF NOT EXISTS `activity_table` (steamid INT UNSIGNED, date DATE, seconds INT UNSIGNED, PRIMARY KEY (steamid, date));");
+		db.Query(OnFastQuery, "CREATE TABLE IF NOT EXISTS `players_activity_table` (steamid INT UNSIGNED, date DATE, seconds INT UNSIGNED, PRIMARY KEY (steamid, date));");
 	}
 	else
 	{
@@ -107,7 +107,7 @@ public void OnGetClientTime(Database db, DBResultSet rs, const char[] error, any
 			char row[128];
 			Panel panel = new Panel();
 			
-			Format(row, sizeof(row), "%t", "activity_table");
+			Format(row, sizeof(row), "%t", "players_activity_table");
 			panel.SetTitle(row);
 
 			Format(row, sizeof(row), "%t", "time_current_session", sessionTime);
