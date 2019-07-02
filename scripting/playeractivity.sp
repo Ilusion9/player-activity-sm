@@ -19,7 +19,6 @@ public void OnPluginStart()
 	LoadTranslations("playeractivity.phrases");
 	Database.Connect(OnDatabaseConnection, "activity");
 	
-	RegConsoleCmd("sm_time", Command_Time);
 	RegConsoleCmd("sm_activity", Command_Time);
 }
 
