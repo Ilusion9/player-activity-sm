@@ -1,4 +1,4 @@
-# Time played
+# Players activity
 This plugin will display of players activity on the server.
 
 # Database configuration
