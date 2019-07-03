@@ -115,7 +115,7 @@ public void OnGetClientTime(Database db, DBResultSet rs, const char[] error, any
 			Format(row, sizeof(row), "%t", "time_activity");
 			panel.SetTitle(row);
 
-			Format(row, sizeof(row), "%t", "first_seen", date);
+			Format(row, sizeof(row), "%t", "time_first_seen", date);
 			panel.DrawText(row);
 			
 			Format(row, sizeof(row), "%t", "time_current_session", sessionTime);
