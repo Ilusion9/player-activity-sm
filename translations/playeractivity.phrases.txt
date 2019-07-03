@@ -5,6 +5,12 @@
 		"en"			"Activity"
 	}
 	
+	"time_first_seen"
+	{
+		"#format"		"{1:s}"
+		"en"			"First seen: {1}"
+	}
+	
 	"time_current_session"
 	{
 		"#format"		"{1:d}"
