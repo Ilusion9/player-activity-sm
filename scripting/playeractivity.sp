@@ -7,18 +7,22 @@ public Plugin myinfo =
 {
     name = "Players Activity",
     author = "Ilusion9",
-    description = "Informations of players activity",
+    description = "Informations of player's activity",
     version = "2.5",
-    url = "https://forums.alliedmods.net/"
+    url = "https://github.com/Ilusion9/"
 };
 
 Database hDatabase;
 
 public void OnPluginStart()
 {
+	/* Load translation file */
 	LoadTranslations("playeractivity.phrases");
+	
+	/* Connect to the database */
 	Database.Connect(OnDatabaseConnection, "activity");
 	
+	/* Register a new command */
 	RegConsoleCmd("sm_activity", Command_Time);
 }
 
@@ -26,6 +30,7 @@ public void OnMapStart()
 {
 	if (hDatabase)
 	{
+		/* Merge player's data older than 2 weeks */
 		Transaction data = new Transaction();
 		
 		data.AddQuery("CREATE TEMPORARY TABLE players_activity_table_temp SELECT steamid, min(date), sum(seconds) FROM players_activity_table WHERE date < CURRENT_DATE - INTERVAL 2 WEEK GROUP BY steamid;");
@@ -43,6 +48,7 @@ public void OnClientDisconnect(int client)
 	
 	if (steamId)
 	{		
+		/* Insert player's time into database */
 		char query[256];
 		
 		Format(query, sizeof(query), "INSERT INTO players_activity_table (steamid, date, seconds) VALUES (%d, CURRENT_DATE, %d) ON DUPLICATE KEY UPDATE seconds = seconds + VALUES(seconds);", steamId, GetClientMapTime(client));
@@ -58,6 +64,7 @@ public Action Command_Time(int client, int args)
 		
 		if (steamId)
 		{
+			/* Select player's time from database */
 			char query[256];
 			
 			Format(query, sizeof(query), "SELECT sum(CASE WHEN date >= CURRENT_DATE - INTERVAL 2 WEEK THEN seconds END), sum(seconds), min(date) FROM players_activity_table WHERE steamid = %d;", steamId);  
@@ -72,12 +79,15 @@ public void OnDatabaseConnection(Database db, const char[] error, any data)
 {
 	if (db)
 	{
+		/* Save the database handle, so we don't need to connect again on every query */
 		hDatabase = db;
-	
+		
+		/* Create the table if not exists */
 		db.Query(OnFastQuery, "CREATE TABLE IF NOT EXISTS players_activity_table (steamid INT UNSIGNED, date DATE, seconds INT UNSIGNED, PRIMARY KEY (steamid, date));");
 	}
 	else
 	{
+		/* If there's no connection, unload this plugin */
 		LogError("Could not connect to the database: %s", error);
 		SetFailState("Could not connect to the database.");
 	}
@@ -91,22 +101,31 @@ public void OnGetClientTime(Database db, DBResultSet rs, const char[] error, any
 
 		if (client)
 		{
+			/* Get the session time */
 			int sessionTime = RoundToZero(GetClientTime(client) / 60);
+			
 			int pastTime = GetClientMapTime(client);
 			int recordTime = pastTime;
 			char date[65];
 			
 			if (rs.FetchRow())
 			{
+				/* Get the past 2 weeks time */
 				pastTime += rs.FetchInt(0);
+				
+				/* Get the total time */
 				recordTime += rs.FetchInt(1);
+				
+				/* Get the first connection date */
 				rs.FetchString(2, date, sizeof(date));
 			}
 			else
 			{
+				/* If we cannot find the player into database, then today will be his first connection date */
 				FormatTime(date, sizeof(date), "%Y-%m-%d");
 			}
 			
+			/* Display messages from translation file according to the language of the client */
 			SetGlobalTransTarget(client);
 			
 			char row[128];
@@ -114,7 +133,7 @@ public void OnGetClientTime(Database db, DBResultSet rs, const char[] error, any
 			
 			Format(row, sizeof(row), "%t", "time_activity");
 			panel.SetTitle(row);
-
+			
 			Format(row, sizeof(row), "%t", "time_first_seen", date);
 			panel.DrawText(row);
 			
@@ -127,9 +146,11 @@ public void OnGetClientTime(Database db, DBResultSet rs, const char[] error, any
 			Format(row, sizeof(row), "%t", "time_on_record", recordTime / 3600);
 			panel.DrawText(row);
 			
+			/* Set the current key to 9 */
 			panel.DrawItem("", ITEMDRAW_SPACER);
 			panel.CurrentKey = GetMaxPageItems(panel.Style);
 			
+			/* Display the "Exit" key */
 			Format(row, sizeof(row), "%t", "time_panel_exit");
 			panel.DrawItem(row, ITEMDRAW_CONTROL);
 			
