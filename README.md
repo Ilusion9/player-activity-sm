@@ -1,5 +1,5 @@
 # Players activity
-This plugin will display informations of players activity on the server.
+This plugin will display informations of player's activity on the server.
 
 # Database configuration
 ```
