@@ -1,5 +1,10 @@
 "Phrases"
 {
+	"Activity Title"
+	{
+		"en"			"Activity"
+	}
+
 	"Activity Recent"
 	{
 		"#format"		"{1:d}"
