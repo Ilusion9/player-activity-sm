@@ -110,8 +110,26 @@ public void OnGetClientTime(Database db, DBResultSet rs, const char[] error, any
 				totalTime += rs.FetchInt(1);
 			}
 			
-			PrintToChat(client, "%t", "Activity Recent", recentTime / 3600);
-			PrintToChat(client, "%t", "Activity Total", totalTime / 3600);
+			SetGlobalTransTarget(client);
+			
+			char buffer[128];
+			Panel panel = new Panel();
+			
+			Format(buffer, sizeof(buffer), "%t", "Activity Title");
+			panel.SetTitle(buffer);
+
+			Format(buffer, sizeof(buffer), "%t", "Activity Recent", recentTime / 3600);
+			panel.DrawText(buffer);
+			
+			Format(buffer, sizeof(buffer), "%t", "Activity Total", totalTime / 3600);
+			panel.DrawText(buffer);
+			
+			panel.DrawItem("", ITEMDRAW_SPACER);
+			panel.CurrentKey = GetMaxPageItems(panel.Style);
+			panel.DrawItem("Exit", ITEMDRAW_CONTROL);
+	
+			panel.Send(client, Panel_DoNothing, MENU_TIME_FOREVER);
+			delete panel;
 		}
 	}
 	else
