@@ -17,7 +17,7 @@ This plugin will display informations of player's activity on the server.
 
 # Example of output
 ```
-12 minutes - current session
+Activity
 22 hours - past two weeks
-335 hours - on record
+335 hours - total
 ```
