@@ -1,0 +1,14 @@
+"Phrases"
+{
+	"Activity Recent"
+	{
+		"#format"		"{1:d}"
+		"en"			"{1} hours - past two weeks"
+	}
+	
+	"Activity Total"
+	{
+		"#format"		"{1:d}"
+		"en"			"{1} hours - total"
+	}
+}
