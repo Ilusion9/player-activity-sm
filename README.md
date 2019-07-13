@@ -5,7 +5,7 @@ This plugin will display informations of player's activity on the server.
 ```
 "activity" 
 { 
-    "driver"            "mysql" 
+    "driver"            "mysql" // only mysql
     "host"                "" 
     "database"            "" 
     "user"                "" 
