@@ -13,6 +13,7 @@ public Plugin myinfo =
 };
 
 Database hDatabase;
+int g_ClientTime[MAXPLAYERS + 1][2];
 
 public void OnPluginStart()
 {
@@ -25,6 +26,34 @@ public void OnPluginStart()
 	/* Register a new command */
 	RegConsoleCmd("sm_time", Command_Activity);
 	RegConsoleCmd("sm_activity", Command_Activity);
+}
+
+public void OnDatabaseConnection(Database db, const char[] error, any data)
+{
+	if (db)
+	{
+		/* Check if the driver is different than MYSQL */
+		char buffer[128];
+		db.Driver.GetIdentifier(buffer, sizeof(buffer));
+		
+		if (!StrEqual(buffer, "mysql", false))
+		{
+			LogError("This plugin allows only MYSQL connections.");
+			SetFailState("Could not connect to the database.");
+		}
+		
+		/* Save the database handle, so we don't need to connect again on every query */
+		hDatabase = db;
+		
+		/* Create the table if not exists */
+		db.Query(OnFastQuery, "CREATE TABLE IF NOT EXISTS players_activity_table (steamid INT UNSIGNED, date DATE, seconds INT UNSIGNED, PRIMARY KEY (steamid, date));");
+	}
+	else
+	{
+		/* If there's no connection, unload this plugin */
+		LogError("Could not connect to the database: %s", error);
+		SetFailState("Could not connect to the database.");
+	}
 }
 
 public void OnMapStart()
@@ -40,6 +69,49 @@ public void OnMapStart()
 		data.AddQuery("DROP TABLE players_activity_table_temp;");
 		
 		hDatabase.Execute(data);
+	}
+}
+
+public void OnClientConnected(int client)
+{
+	/* Initialise player's data */
+	g_ClientTime[client][0] = 0;
+	g_ClientTime[client][1] = 0;
+}
+
+public void OnClientPostAdminCheck(int client)
+{
+	int steamId = GetSteamAccountID(client);
+	
+	if (steamId)
+	{
+		/* Select player's time from database */
+		char query[256];
+		
+		Format(query, sizeof(query), "SELECT sum(CASE WHEN date >= CURRENT_DATE - INTERVAL 2 WEEK THEN seconds END), sum(seconds) FROM players_activity_table WHERE steamid = %d;", steamId);  
+		hDatabase.Query(OnGetClientTime, query, GetClientUserId(client));
+	}
+}
+
+public void OnGetClientTime(Database db, DBResultSet rs, const char[] error, any data)
+{
+	if (rs)
+	{
+		int client = GetClientOfUserId(view_as<int>(data));
+
+		if (client)
+		{			
+			if (rs.FetchRow())
+			{
+				/* Fetch database result */
+				g_ClientTime[client][0] = rs.FetchInt(0);
+				g_ClientTime[client][1] = rs.FetchInt(1);
+			}
+		}
+	}
+	else
+	{
+		LogError("Failed to query database: %s", error);
 	}
 }
 
@@ -61,81 +133,30 @@ public Action Command_Activity(int client, int args)
 {
 	if (client)
 	{
-		int steamId = GetSteamAccountID(client);
+		SetGlobalTransTarget(client);
+				
+		char buffer[128];
+		Panel panel = new Panel();
+		int mapTime = GetClientMapTime(client);
+
+		Format(buffer, sizeof(buffer), "%t", "Activity Title");
+		panel.SetTitle(buffer);
+
+		Format(buffer, sizeof(buffer), "%t", "Activity Recent", (g_ClientTime[client][0] + mapTime) / 3600);
+		panel.DrawText(buffer);
 		
-		if (steamId)
-		{
-			/* Select player's time from database */
-			char query[256];
-			
-			Format(query, sizeof(query), "SELECT sum(CASE WHEN date >= CURRENT_DATE - INTERVAL 2 WEEK THEN seconds END), sum(seconds) FROM players_activity_table WHERE steamid = %d;", steamId);  
-			hDatabase.Query(OnGetClientTime, query, GetClientUserId(client));
-		}
+		Format(buffer, sizeof(buffer), "%t", "Activity Total", (g_ClientTime[client][1] + mapTime) / 3600);
+		panel.DrawText(buffer);
+		
+		panel.DrawItem("", ITEMDRAW_SPACER);
+		panel.CurrentKey = GetMaxPageItems(panel.Style);
+		panel.DrawItem("Exit", ITEMDRAW_CONTROL);
+
+		panel.Send(client, Panel_DoNothing, MENU_TIME_FOREVER);
+		delete panel;
 	}	
 	
 	return Plugin_Handled;
-}
-
-public void OnDatabaseConnection(Database db, const char[] error, any data)
-{
-	if (db)
-	{
-		/* Save the database handle, so we don't need to connect again on every query */
-		hDatabase = db;
-		
-		/* Create the table if not exists */
-		db.Query(OnFastQuery, "CREATE TABLE IF NOT EXISTS players_activity_table (steamid INT UNSIGNED, date DATE, seconds INT UNSIGNED, PRIMARY KEY (steamid, date));");
-	}
-	else
-	{
-		/* If there's no connection, unload this plugin */
-		LogError("Could not connect to the database: %s", error);
-		SetFailState("Could not connect to the database.");
-	}
-}
-
-public void OnGetClientTime(Database db, DBResultSet rs, const char[] error, any data)
-{
-	if (rs)
-	{
-		int client = GetClientOfUserId(view_as<int>(data));
-
-		if (client)
-		{			
-			int recentTime = GetClientMapTime(client), totalTime = recentTime;
-			
-			if (rs.FetchRow())
-			{
-				recentTime += rs.FetchInt(0);
-				totalTime += rs.FetchInt(1);
-			}
-			
-			SetGlobalTransTarget(client);
-			
-			char buffer[128];
-			Panel panel = new Panel();
-			
-			Format(buffer, sizeof(buffer), "%t", "Activity Title");
-			panel.SetTitle(buffer);
-
-			Format(buffer, sizeof(buffer), "%t", "Activity Recent", recentTime / 3600);
-			panel.DrawText(buffer);
-			
-			Format(buffer, sizeof(buffer), "%t", "Activity Total", totalTime / 3600);
-			panel.DrawText(buffer);
-			
-			panel.DrawItem("", ITEMDRAW_SPACER);
-			panel.CurrentKey = GetMaxPageItems(panel.Style);
-			panel.DrawItem("Exit", ITEMDRAW_CONTROL);
-	
-			panel.Send(client, Panel_DoNothing, MENU_TIME_FOREVER);
-			delete panel;
-		}
-	}
-	else
-	{
-		LogError("Failed to query database: %s", error);
-	}
 }
 
 public int Panel_DoNothing(Menu menu, MenuAction action, int param1, int param2) {}
