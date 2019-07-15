@@ -39,7 +39,7 @@ public void OnDatabaseConnection(Database db, const char[] error, any data)
 		if (!StrEqual(buffer, "mysql", false))
 		{
 			LogError("This plugin allows only MYSQL connections.");
-			SetFailState("Could not connect to the database.");
+			SetFailState("This plugin allows only MYSQL connections.");
 		}
 		
 		/* Save the database handle, so we don't need to connect again on every query */
