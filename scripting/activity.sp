@@ -13,6 +13,9 @@ public Plugin myinfo =
 };
 
 Database hDatabase;
+Handle gF_OnGetClientTime;
+
+bool g_FetchedData[MAXPLAYERS + 1];
 int g_ClientTime[MAXPLAYERS + 1][2];
 
 public void OnPluginStart()
@@ -38,8 +41,8 @@ public void OnDatabaseConnection(Database db, const char[] error, any data)
 		
 		if (!StrEqual(buffer, "mysql", false))
 		{
-			LogError("This plugin allows only MYSQL connections.");
-			SetFailState("This plugin allows only MYSQL connections.");
+			LogError("Could not connect to the database: expected mysql database.");
+			SetFailState("Could not connect to the database.");
 		}
 		
 		/* Save the database handle, so we don't need to connect again on every query */
@@ -75,6 +78,7 @@ public void OnMapStart()
 public void OnClientConnected(int client)
 {
 	/* Initialise player's data */
+	g_FetchedData[client] = false;
 	g_ClientTime[client][0] = 0;
 	g_ClientTime[client][1] = 0;
 }
@@ -107,6 +111,14 @@ public void OnGetClientTime(Database db, DBResultSet rs, const char[] error, any
 				g_ClientTime[client][0] = rs.FetchInt(0);
 				g_ClientTime[client][1] = rs.FetchInt(1);
 			}
+			
+			g_FetchedData[client] = true;
+
+			Call_StartForward(gF_OnGetClientTime);
+			Call_PushCell(client);
+			Call_PushCell(g_ClientTime[client][0]);
+			Call_PushCell(g_ClientTime[client][1]);
+			Call_Finish();
 		}
 	}
 	else
@@ -181,4 +193,60 @@ int GetClientMapTime(int client)
 	}
 
 	return RoundToZero(clientTime);
+}
+
+public APLRes AskPluginLoad2(Handle myself, bool late, char [] error, int err_max)
+{
+	CreateNative("Activity_GetClientRecentTime", Native_GetClientRecentTime);
+	CreateNative("Activity_GetClientTotalTime", Native_GetClientTotalTime);
+	gF_OnGetClientTime = CreateGlobalForward("Activity_OnGetClientTime", ET_Event, Param_Cell, Param_Cell, Param_Cell);
+	
+	RegPluginLibrary("mostactive");
+	return APLRes_Success;
+}
+
+public int Native_GetClientRecentTime(Handle hPlugin, int numParams)
+{
+	int client = GetNativeCell(1);
+	if (client < 1 || client > MaxClients)
+	{
+		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid client index %d", client);
+	}
+	
+	if (!IsClientInGame(client))
+	{
+		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not in game", client);
+	}
+	
+	if (g_FetchedData[client])
+	{
+		SetNativeCellRef(1, g_ClientTime[client][0]);
+		return true;
+	}
+	
+	SetNativeCellRef(1, 0);
+	return false;
+}
+
+public int Native_GetClientTotalTime(Handle hPlugin, int numParams)
+{
+	int client = GetNativeCell(1);
+	if (client < 1 || client > MaxClients)
+	{
+		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid client index %d", client);
+	}
+	
+	if (!IsClientInGame(client))
+	{
+		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not in game", client);
+	}
+	
+	if (g_FetchedData[client])
+	{
+		SetNativeCellRef(1, g_ClientTime[client][1]);
+		return true;
+	}
+	
+	SetNativeCellRef(1, 0);
+	return false;
 }
