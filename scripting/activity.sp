@@ -205,7 +205,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char [] error, int err_ma
 	return APLRes_Success;
 }
 
-public int Native_GetClientRecentTime(Handle hPlugin, int numParams)
+public bool Native_GetClientRecentTime(Handle hPlugin, int numParams)
 {
 	int client = GetNativeCell(1);
 	if (client < 1 || client > MaxClients)
@@ -228,7 +228,7 @@ public int Native_GetClientRecentTime(Handle hPlugin, int numParams)
 	return false;
 }
 
-public int Native_GetClientTotalTime(Handle hPlugin, int numParams)
+public bool Native_GetClientTotalTime(Handle hPlugin, int numParams)
 {
 	int client = GetNativeCell(1);
 	if (client < 1 || client > MaxClients)
