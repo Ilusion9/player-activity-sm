@@ -4,7 +4,7 @@
 #define _activity_included
 
 /**
- * Called when the database returns the client's time (on connecting).
+ * Called when the database returns the client's time (on connecting)
  * 
  * @param	client		Client's index
  * @param	recentTime	Client's recent time (past two weeks)
@@ -13,20 +13,22 @@
  forward void Activity_OnGetClientTime(int client, int recentTime, int totalTime);
 
 /**
- * Returns the client's recent time (past two weeks).
+ * Returns the client's recent time (past two weeks)
  *
- * @param client		Client's index.
- * @return			True if the database returned client's data.
+ * @param client		Client's index
+ * @param recentTime		Client's recent time (past two weeks)
+ * @return			True if the database returned client's data
  */
-native bool Activity_GetClientRecentTime(int client);
+native bool Activity_GetClientRecentTime(int client, int recentTime);
 
 /**
- * Returns the client's total time.
+ * Returns the client's total time
  *
- * @param client		Client's index.
- * @return			True if the database returned client's data.
+ * @param client		Client's index
+ * @param totalTime		Client's total time
+ * @return			True if the database returned client's data
  */
-native bool Activity_GetClientTotalTime(int client);
+native bool Activity_GetClientTotalTime(int client, int totalTime);
 
 /* DO NOT EDIT BELOW THIS LINE */
 
