@@ -7,7 +7,7 @@
  * Called when the database returns the client's time (on connecting).
  * 
  * @param	client		Client index
- * @param	recentTime	Client recent time (past twp weeks)
+ * @param	recentTime	Client recent time (past two weeks)
  * @param	totalTime	Client total time
  */
  forward void Activity_OnGetClientTime(int client, int recentTime, int totalTime);
