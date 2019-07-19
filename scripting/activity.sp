@@ -201,7 +201,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char [] error, int err_ma
 	CreateNative("Activity_GetClientTotalTime", Native_GetClientTotalTime);
 	gF_OnGetClientTime = CreateGlobalForward("Activity_OnGetClientTime", ET_Event, Param_Cell, Param_Cell, Param_Cell);
 	
-	RegPluginLibrary("mostactive");
+	RegPluginLibrary("activity");
 	return APLRes_Success;
 }
 
