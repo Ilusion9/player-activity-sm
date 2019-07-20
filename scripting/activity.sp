@@ -14,6 +14,8 @@ public Plugin myinfo =
 
 Database hDatabase;
 Handle gF_OnGetClientTime;
+
+bool g_ClientTimeFetched[MAXPLAYERS + 1];
 int g_ClientTime[MAXPLAYERS + 1][2];
 
 public void OnPluginStart()
@@ -76,6 +78,7 @@ public void OnMapStart()
 public void OnClientConnected(int client)
 {
 	/* Initialise player's data */
+	g_ClientTimeFetched[client] = false;
 	g_ClientTime[client][0] = 0;
 	g_ClientTime[client][1] = 0;
 }
@@ -109,6 +112,8 @@ public void OnGetClientTime(Database db, DBResultSet rs, const char[] error, any
 				g_ClientTime[client][1] = rs.FetchInt(1);
 			}
 			
+			g_ClientTimeFetched[client] = true;
+			
 			Call_StartForward(gF_OnGetClientTime);
 			Call_PushCell(client);
 			Call_PushCell(g_ClientTime[client][0]);
@@ -140,27 +145,30 @@ public Action Command_Activity(int client, int args)
 {
 	if (client)
 	{
-		SetGlobalTransTarget(client);
-				
-		char buffer[128];
-		Panel panel = new Panel();
-		int mapTime = GetClientMapTime(client);
+		if (g_ClientTimeFetched[client])
+		{
+			SetGlobalTransTarget(client);
+					
+			char buffer[128];
+			Panel panel = new Panel();
+			int mapTime = GetClientMapTime(client);
 
-		Format(buffer, sizeof(buffer), "%t", "Activity Title");
-		panel.SetTitle(buffer);
+			Format(buffer, sizeof(buffer), "%t", "Activity Title");
+			panel.SetTitle(buffer);
 
-		Format(buffer, sizeof(buffer), "%t", "Activity Recent", (g_ClientTime[client][0] + mapTime) / 3600);
-		panel.DrawText(buffer);
-		
-		Format(buffer, sizeof(buffer), "%t", "Activity Total", (g_ClientTime[client][1] + mapTime) / 3600);
-		panel.DrawText(buffer);
-		
-		panel.DrawItem("", ITEMDRAW_SPACER);
-		panel.CurrentKey = GetMaxPageItems(panel.Style);
-		panel.DrawItem("Exit", ITEMDRAW_CONTROL);
+			Format(buffer, sizeof(buffer), "%t", "Activity Recent", float(g_ClientTime[client][0] + mapTime) / 3600);
+			panel.DrawText(buffer);
+			
+			Format(buffer, sizeof(buffer), "%t", "Activity Total", (g_ClientTime[client][1] + mapTime) / 3600);
+			panel.DrawText(buffer);
+			
+			panel.DrawItem("", ITEMDRAW_SPACER);
+			panel.CurrentKey = GetMaxPageItems(panel.Style);
+			panel.DrawItem("Exit", ITEMDRAW_CONTROL);
 
-		panel.Send(client, Panel_DoNothing, MENU_TIME_FOREVER);
-		delete panel;
+			panel.Send(client, Panel_DoNothing, MENU_TIME_FOREVER);
+			delete panel;
+		}
 	}	
 	
 	return Plugin_Handled;
@@ -214,7 +222,8 @@ public int Native_GetClientRecentTime(Handle hPlugin, int numParams)
 		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not in game", client);
 	}
 	
-	return g_ClientTime[client][0];
+	SetNativeCellRef(2, g_ClientTime[client][0] + GetClientMapTime(client));
+	return g_ClientTimeFetched[client];
 }
 
 public int Native_GetClientTotalTime(Handle hPlugin, int numParams)
@@ -231,5 +240,6 @@ public int Native_GetClientTotalTime(Handle hPlugin, int numParams)
 		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not in game", client);
 	}
 
-	return g_ClientTime[client][1];
+	SetNativeCellRef(2, g_ClientTime[client][1] + GetClientMapTime(client));
+	return g_ClientTimeFetched[client];
 }
