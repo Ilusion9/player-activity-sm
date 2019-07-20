@@ -7,8 +7,8 @@
  * Called when the database returns the client's time (on connecting).
  * 
  * @param	client		Client's index
- * @param	recentTime	Client's recent time (past two weeks)
- * @param	totalTime	Client's total time
+ * @param	recentTime	Client's recent time in seconds (past two weeks)
+ * @param	totalTime	Client's total time in seconds
  */
  forward void Activity_OnGetClientTime(int client, int recentTime, int totalTime);
 
@@ -16,17 +16,19 @@
  * Returns the client's recent time (past two weeks)
  *
  * @param client		Client's index
- * @return				Client's recent time (past two weeks)
+ * @param recentTime	Client's recent time in seconds (past two weeks)
+ * @return				True if the client's time was returned from database
  */
-native int Activity_GetClientRecentTime(int client);
+native int Activity_GetClientRecentTime(int client, int &recentTime);
 
 /**
  * Returns the client's total time
  *
  * @param client		Client's index
- * @return				Client's total time
+ * @param totalTime		Client's total time in seconds
+ * @return				True if the client's time was returned from database
  */
-native int Activity_GetClientTotalTime(int client);
+native int Activity_GetClientTotalTime(int client, int &totalTime);
 
 /* DO NOT EDIT BELOW THIS LINE */
 
