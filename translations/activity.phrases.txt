@@ -7,7 +7,7 @@
 
 	"Activity Recent"
 	{
-		"#format"		"{1:d}"
+		"#format"		"{1:0.1f}"
 		"en"			"{1} hours - past two weeks"
 	}
 	
