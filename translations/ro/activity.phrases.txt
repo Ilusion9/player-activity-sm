@@ -8,12 +8,12 @@
 	"Activity Recent"
 	{
 		"#format"		"{1:0.1f}"
-		"ro"			"{1} ore - in ultimele 2 saptamani"
+		"ro"			"{1} ore - în ultimele 2 săptămâni"
 	}
 	
 	"Activity Total"
 	{
 		"#format"		"{1:d}"
-		"ro"			"{1} ore - in total"
+		"ro"			"{1} ore - în total"
 	}
 }
