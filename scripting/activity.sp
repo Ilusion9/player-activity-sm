@@ -31,11 +31,10 @@ public void OnPluginStart()
 	/* Connect to the database */
 	Database.Connect(Database_OnConnect, "activity");
 	
-	/* Register a new command */
+	/* Register new commands */
 	RegConsoleCmd("sm_time", Command_Activity);
 	RegConsoleCmd("sm_activity", Command_Activity);
 	
-	/* If there are connected players (on plugin load) then retrieve their data */
 	for (int i = 1; i <= MaxClients; i++)
 	{
 		OnClientConnected(i);
