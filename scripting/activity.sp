@@ -35,7 +35,7 @@ public void OnPluginStart()
 	RegConsoleCmd("sm_time", Command_Activity);
 	RegConsoleCmd("sm_activity", Command_Activity);
 	
-	/* If there are connected players on loading then retrieve their data */
+	/* If there are connected players (on plugin load) then retrieve their data */
 	OnPluginLoad();
 }
 
