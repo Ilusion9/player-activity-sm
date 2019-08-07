@@ -12,15 +12,16 @@ public Plugin myinfo =
     url = "https://github.com/Ilusion9/"
 };
 
-enum TimeColumns {
-	Recent = 0,
+enum TimeColumns
+{
+	Fetched = 0,
+	Recent,
 	Total
-};
+}
 
 Database hDatabase;
 Handle gF_OnGetClientTime;
 
-bool g_FetchedData[MAXPLAYERS + 1];
 int g_ClientTime[MAXPLAYERS + 1][TimeColumns];
 
 public void OnPluginStart()
@@ -38,11 +39,7 @@ public void OnPluginStart()
 	for (int i = 1; i <= MaxClients; i++)
 	{
 		OnClientConnected(i);
-
-		if (IsClientInGame(i))
-		{
-			OnClientPostAdminCheck(i);
-		}
+		if (IsClientInGame(i)) OnClientPostAdminCheck(i);
 	}
 }
 
@@ -90,7 +87,7 @@ public void OnMapEnd()
 public void OnClientConnected(int client)
 {
 	/* Initialise player's data */
-	g_FetchedData[client] = false;
+	g_ClientTime[client][Fetched] = false;
 	g_ClientTime[client][Recent] = 0;
 	g_ClientTime[client][Total] = 0;
 }
@@ -124,7 +121,7 @@ public void Database_GetClientTime(Database db, DBResultSet rs, const char[] err
 				g_ClientTime[client][Total] = rs.FetchInt(1);
 			}
 			
-			g_FetchedData[client] = true;
+			g_ClientTime[client][Fetched] = true;
 			
 			Call_StartForward(gF_OnGetClientTime);
 			Call_PushCell(client);
@@ -157,7 +154,7 @@ public Action Command_Activity(int client, int args)
 {
 	if (client)
 	{
-		if (g_FetchedData[client])
+		if (g_ClientTime[client][Fetched])
 		{
 			SetGlobalTransTarget(client);
 					
@@ -235,7 +232,7 @@ public int Native_GetClientRecentTime(Handle hPlugin, int numParams)
 	}
 	
 	SetNativeCellRef(2, g_ClientTime[client][Recent] + GetClientMapTime(client));
-	return g_FetchedData[client];
+	return g_ClientTime[client][Fetched];
 }
 
 public int Native_GetClientTotalTime(Handle hPlugin, int numParams)
@@ -253,5 +250,5 @@ public int Native_GetClientTotalTime(Handle hPlugin, int numParams)
 	}
 
 	SetNativeCellRef(2, g_ClientTime[client][Total] + GetClientMapTime(client));
-	return g_FetchedData[client];
+	return g_ClientTime[client][Fetched];
 }
