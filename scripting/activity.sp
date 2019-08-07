@@ -36,11 +36,6 @@ public void OnPluginStart()
 	RegConsoleCmd("sm_activity", Command_Activity);
 	
 	/* If there are connected players (on plugin load) then retrieve their data */
-	OnPluginLoad();
-}
-
-public void OnPluginLoad()
-{
 	for (int i = 1; i <= MaxClients; i++)
 	{
 		OnClientConnected(i);
