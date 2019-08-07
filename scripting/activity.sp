@@ -218,15 +218,15 @@ int GetClientMapTime(int client)
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char [] error, int err_max)
 {
-	CreateNative("Activity_GetRecentTime", Native_GetRecentTime);
-	CreateNative("Activity_GetTotalTime", Native_GetTotalTime);
+	CreateNative("Activity_GetClientRecentTime", Native_GetClientRecentTime);
+	CreateNative("Activity_GetClientTotalTime", Native_GetClientTotalTime);
 	gF_OnGetClientTime = CreateGlobalForward("Activity_OnGetClientTime", ET_Event, Param_Cell, Param_Cell, Param_Cell);
 	
 	RegPluginLibrary("activity");
 	return APLRes_Success;
 }
 
-public int Native_GetRecentTime(Handle hPlugin, int numParams)
+public int Native_GetClientRecentTime(Handle hPlugin, int numParams)
 {
 	int client = GetNativeCell(1);
 	
@@ -244,7 +244,7 @@ public int Native_GetRecentTime(Handle hPlugin, int numParams)
 	return g_FetchedData[client];
 }
 
-public int Native_GetTotalTime(Handle hPlugin, int numParams)
+public int Native_GetClientTotalTime(Handle hPlugin, int numParams)
 {
 	int client = GetNativeCell(1);
 	
