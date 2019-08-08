@@ -12,6 +12,7 @@ public Plugin myinfo =
     url = "https://github.com/Ilusion9/"
 };
 
+/* TO DO: use enum structs when SM 1.10 will be stable */
 enum TimeColumns
 {
 	Fetched = 0,
@@ -94,13 +95,12 @@ public void OnClientConnected(int client)
 
 public void OnClientPostAdminCheck(int client)
 {
+	/* Select player's time from database */
 	int steamId = GetSteamAccountID(client);
 	
 	if (steamId)
 	{
-		/* Select player's time from database */
 		char query[256];
-		
 		Format(query, sizeof(query), "SELECT sum(CASE WHEN date >= CURRENT_DATE - INTERVAL 2 WEEK THEN seconds END), sum(seconds) FROM players_activity_table WHERE steamid = %d;", steamId);  
 		hDatabase.Query(Database_GetClientTime, query, GetClientUserId(client));
 	}
@@ -110,13 +110,14 @@ public void Database_GetClientTime(Database db, DBResultSet rs, const char[] err
 {
 	if (rs)
 	{
+		/* Check if the player is still connected */
 		int client = GetClientOfUserId(view_as<int>(data));
 
 		if (client)
-		{			
+		{		
+			/* Fetch database result */
 			if (rs.FetchRow())
 			{
-				/* Fetch database result */
 				g_ClientTime[client][Recent] = rs.FetchInt(0);
 				g_ClientTime[client][Total] = rs.FetchInt(1);
 			}
@@ -138,13 +139,12 @@ public void Database_GetClientTime(Database db, DBResultSet rs, const char[] err
 
 public void OnClientDisconnect(int client)
 {
+	/* Insert player's time into database */
 	int steamId = GetSteamAccountID(client);
 	
 	if (steamId)
 	{		
-		/* Insert player's time into database */
 		char query[256];
-		
 		Format(query, sizeof(query), "INSERT INTO players_activity_table (steamid, date, seconds) VALUES (%d, CURRENT_DATE, %d) ON DUPLICATE KEY UPDATE seconds = seconds + VALUES(seconds);", steamId, GetClientMapTime(client));
 		hDatabase.Query(Database_FastQuery, query);
 	}
@@ -154,8 +154,10 @@ public Action Command_Activity(int client, int args)
 {
 	if (client)
 	{
+		/* Check if the player's data was fetched */
 		if (g_ClientTime[client][Fetched])
 		{
+			/* Display the player's time on server */
 			SetGlobalTransTarget(client);
 					
 			char buffer[128];
