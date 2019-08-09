@@ -12,7 +12,6 @@ public Plugin myinfo =
     url = "https://github.com/Ilusion9/"
 };
 
-/* TO DO: use enum structs when SM 1.10 will be stable */
 enum TimeColumns
 {
 	Fetched = 0,
@@ -27,13 +26,9 @@ int g_ClientTime[MAXPLAYERS + 1][TimeColumns];
 
 public void OnPluginStart()
 {
-	/* Load translation file */
 	LoadTranslations("activity.phrases");
-	
-	/* Connect to the database */
 	Database.Connect(Database_OnConnect, "activity");
 	
-	/* Register new commands */
 	RegConsoleCmd("sm_time", Command_Activity);
 	RegConsoleCmd("sm_activity", Command_Activity);
 	
@@ -48,7 +43,6 @@ public void Database_OnConnect(Database db, const char[] error, any data)
 {
 	if (db)
 	{
-		/* Check if the driver is different than MYSQL */
 		char buffer[128];
 		db.Driver.GetIdentifier(buffer, sizeof(buffer));
 		
@@ -58,15 +52,11 @@ public void Database_OnConnect(Database db, const char[] error, any data)
 			SetFailState("Could not connect to the database.");
 		}
 		
-		/* Save the database handle, so we don't need to connect again on every query */
 		hDatabase = db;
-		
-		/* Create the table if not exists */
 		db.Query(Database_FastQuery, "CREATE TABLE IF NOT EXISTS players_activity_table (steamid INT UNSIGNED, date DATE, seconds INT UNSIGNED, PRIMARY KEY (steamid, date));");
 	}
 	else
 	{
-		/* If there's no connection, unload this plugin */
 		LogError("Could not connect to the database: %s", error);
 		SetFailState("Could not connect to the database.");
 	}
@@ -74,7 +64,7 @@ public void Database_OnConnect(Database db, const char[] error, any data)
 
 public void OnMapEnd()
 {
-	/* Merge player's data older than 2 weeks */
+	/* Merge players data older than 2 weeks */
 	Transaction data = new Transaction();
 	
 	data.AddQuery("CREATE TEMPORARY TABLE players_activity_table_temp SELECT steamid, min(date), sum(seconds) FROM players_activity_table WHERE date < CURRENT_DATE - INTERVAL 2 WEEK GROUP BY steamid;");
@@ -87,7 +77,6 @@ public void OnMapEnd()
 
 public void OnClientConnected(int client)
 {
-	/* Initialise player's data */
 	g_ClientTime[client][Fetched] = false;
 	g_ClientTime[client][Recent] = 0;
 	g_ClientTime[client][Total] = 0;
@@ -95,7 +84,6 @@ public void OnClientConnected(int client)
 
 public void OnClientPostAdminCheck(int client)
 {
-	/* Select player's time from database */
 	int steamId = GetSteamAccountID(client);
 	
 	if (steamId)
@@ -110,12 +98,10 @@ public void Database_GetClientTime(Database db, DBResultSet rs, const char[] err
 {
 	if (rs)
 	{
-		/* Check if the player is still connected */
 		int client = GetClientOfUserId(view_as<int>(data));
 
 		if (client)
 		{		
-			/* Fetch database result */
 			if (rs.FetchRow())
 			{
 				g_ClientTime[client][Recent] = rs.FetchInt(0);
@@ -139,7 +125,6 @@ public void Database_GetClientTime(Database db, DBResultSet rs, const char[] err
 
 public void OnClientDisconnect(int client)
 {
-	/* Insert player's time into database */
 	int steamId = GetSteamAccountID(client);
 	
 	if (steamId)
@@ -154,10 +139,8 @@ public Action Command_Activity(int client, int args)
 {
 	if (client)
 	{
-		/* Check if the player's data was fetched */
 		if (g_ClientTime[client][Fetched])
 		{
-			/* Display the player's time on server */
 			SetGlobalTransTarget(client);
 					
 			char buffer[128];
