@@ -12,17 +12,13 @@ public Plugin myinfo =
     url = "https://github.com/Ilusion9/"
 };
 
-enum TimeColumns
-{
-	Fetched = 0,
-	Recent,
-	Total
-}
-
 Database hDatabase;
-Handle gF_OnGetClientTime;
+Handle g_ClientTimeForward;
 
-int g_ClientTime[MAXPLAYERS + 1][TimeColumns];
+bool g_TimeFetched[MAXPLAYERS + 1];
+
+int g_RecentTime[MAXPLAYERS + 1];
+int g_TotalTime[MAXPLAYERS + 1];
 
 public void OnPluginStart()
 {
@@ -75,9 +71,10 @@ public void OnMapEnd()
 
 public void OnClientConnected(int client)
 {
-	g_ClientTime[client][Fetched] = false;
-	g_ClientTime[client][Recent] = 0;
-	g_ClientTime[client][Total] = 0;
+	g_TimeFetched[client] = false;
+	
+	g_RecentTime[client] = 0;
+	g_TotalTime[client] = 0;
 }
 
 public void OnClientPostAdminCheck(int client)
@@ -106,16 +103,16 @@ public void Database_GetClientTime(Database db, DBResultSet rs, const char[] err
 	{		
 		if (rs.FetchRow())
 		{
-			g_ClientTime[client][Recent] = rs.FetchInt(0);
-			g_ClientTime[client][Total] = rs.FetchInt(1);
+			g_RecentTime[client] = rs.FetchInt(0);
+			g_TotalTime[client] = rs.FetchInt(1);
 		}
 		
-		g_ClientTime[client][Fetched] = true;
+		g_TimeFetched[client] = true;
 		
-		Call_StartForward(gF_OnGetClientTime);
+		Call_StartForward(g_ClientTimeForward);
 		Call_PushCell(client);
-		Call_PushCell(g_ClientTime[client][Recent]);
-		Call_PushCell(g_ClientTime[client][Total]);
+		Call_PushCell(g_RecentTime[client]);
+		Call_PushCell(g_TotalTime[client]);
 		Call_Finish();
 	}
 }
@@ -140,7 +137,7 @@ public Action Command_Activity(int client, int args)
 		return Plugin_Handled;
 	}
 	
-	if (!g_ClientTime[client][Fetched])
+	if (!g_TimeFetched[client])
 	{
 		ReplyToCommand(client, "[SM] %t", "Activity Unavailable");
 		return Plugin_Handled;
@@ -155,10 +152,10 @@ public Action Command_Activity(int client, int args)
 	Format(buffer, sizeof(buffer), "%t", "Activity Title");
 	panel.SetTitle(buffer);
 
-	Format(buffer, sizeof(buffer), "%t", "Activity Recent", float(g_ClientTime[client][Recent] + mapTime) / 3600);
+	Format(buffer, sizeof(buffer), "%t", "Activity Recent", float(g_RecentTime[client] + mapTime) / 3600);
 	panel.DrawText(buffer);
 	
-	Format(buffer, sizeof(buffer), "%t", "Activity Total", (g_ClientTime[client][Total] + mapTime) / 3600);
+	Format(buffer, sizeof(buffer), "%t", "Activity Total", (g_TotalTime[client] + mapTime) / 3600);
 	panel.DrawText(buffer);
 	
 	panel.DrawItem("", ITEMDRAW_SPACER);
@@ -200,7 +197,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char [] error, int err_ma
 	CreateNative("Activity_GetClientRecentTime", Native_GetClientRecentTime);
 	CreateNative("Activity_GetClientTotalTime", Native_GetClientTotalTime);
 	
-	gF_OnGetClientTime = CreateGlobalForward("Activity_OnGetClientTime", ET_Event, Param_Cell, Param_Cell, Param_Cell);
+	g_ClientTimeForward = CreateGlobalForward("Activity_OnGetClientTime", ET_Event, Param_Cell, Param_Cell, Param_Cell);
 	
 	RegPluginLibrary("activity");
 	return APLRes_Success;
@@ -220,8 +217,8 @@ public int Native_GetClientRecentTime(Handle hPlugin, int numParams)
 		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not in game", client);
 	}
 	
-	SetNativeCellRef(2, g_ClientTime[client][Recent] + GetClientMapTime(client));
-	return g_ClientTime[client][Fetched];
+	SetNativeCellRef(2, g_RecentTime[client] + GetClientMapTime(client));
+	return g_TimeFetched[client];
 }
 
 public int Native_GetClientTotalTime(Handle hPlugin, int numParams)
@@ -238,6 +235,6 @@ public int Native_GetClientTotalTime(Handle hPlugin, int numParams)
 		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not in game", client);
 	}
 
-	SetNativeCellRef(2, g_ClientTime[client][Total] + GetClientMapTime(client));
-	return g_ClientTime[client][Fetched];
+	SetNativeCellRef(2, g_TotalTime[client] + GetClientMapTime(client));
+	return g_TimeFetched[client];
 }
