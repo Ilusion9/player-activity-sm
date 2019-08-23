@@ -16,4 +16,9 @@
 		"#format"		"{1:d}"
 		"en"			"{1} hours - total"
 	}
+	
+	"Activity Unavailable"
+	{
+		"en"			"Your activity is unavailable due to a database query error."
+	}
 }
