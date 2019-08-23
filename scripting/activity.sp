@@ -26,40 +26,42 @@ int g_ClientTime[MAXPLAYERS + 1][TimeColumns];
 
 public void OnPluginStart()
 {
+	LoadTranslations("common.phrases");
 	LoadTranslations("activity.phrases");
-	Database.Connect(Database_OnConnect, "activity");
 	
-	RegConsoleCmd("sm_time", Command_Activity);
+	Database.Connect(Database_OnConnect, "activity");
 	RegConsoleCmd("sm_activity", Command_Activity);
 	
 	for (int i = 1; i <= MaxClients; i++)
 	{
 		OnClientConnected(i);
-		if (IsClientInGame(i)) OnClientPostAdminCheck(i);
+		
+		if (IsClientInGame(i))
+		{
+			OnClientPostAdminCheck(i);
+		}
 	}
 }
 
 public void Database_OnConnect(Database db, const char[] error, any data)
 {
-	if (db)
-	{
-		char buffer[128];
-		db.Driver.GetIdentifier(buffer, sizeof(buffer));
-		
-		if (!StrEqual(buffer, "mysql", false))
-		{
-			LogError("Could not connect to the database: expected mysql database.");
-			SetFailState("Could not connect to the database.");
-		}
-		
-		hDatabase = db;
-		db.Query(Database_FastQuery, "CREATE TABLE IF NOT EXISTS players_activity_table (steamid INT UNSIGNED, date DATE, seconds INT UNSIGNED, PRIMARY KEY (steamid, date));");
-	}
-	else
+	if (!db)
 	{
 		LogError("Could not connect to the database: %s", error);
 		SetFailState("Could not connect to the database.");
 	}
+	
+	char buffer[64];
+	db.Driver.GetIdentifier(buffer, sizeof(buffer));
+	
+	if (!StrEqual(buffer, "mysql", false))
+	{
+		LogError("Could not connect to the database: expected mysql database.");
+		SetFailState("Could not connect to the database.");
+	}
+	
+	hDatabase = db;
+	db.Query(Database_FastQuery, "CREATE TABLE IF NOT EXISTS players_activity_table (steamid INT UNSIGNED, date DATE, seconds INT UNSIGNED, PRIMARY KEY (steamid, date));");
 }
 
 public void OnMapEnd()
@@ -96,30 +98,29 @@ public void OnClientPostAdminCheck(int client)
 
 public void Database_GetClientTime(Database db, DBResultSet rs, const char[] error, any data)
 {
-	if (rs)
-	{
-		int client = GetClientOfUserId(view_as<int>(data));
-
-		if (client)
-		{		
-			if (rs.FetchRow())
-			{
-				g_ClientTime[client][Recent] = rs.FetchInt(0);
-				g_ClientTime[client][Total] = rs.FetchInt(1);
-			}
-			
-			g_ClientTime[client][Fetched] = true;
-			
-			Call_StartForward(gF_OnGetClientTime);
-			Call_PushCell(client);
-			Call_PushCell(g_ClientTime[client][Recent]);
-			Call_PushCell(g_ClientTime[client][Total]);
-			Call_Finish();
-		}
-	}
-	else
+	if (!rs)
 	{
 		LogError("Failed to query database: %s", error);
+		return;
+	}
+		
+	int client = GetClientOfUserId(view_as<int>(data));
+
+	if (client)
+	{		
+		if (rs.FetchRow())
+		{
+			g_ClientTime[client][Recent] = rs.FetchInt(0);
+			g_ClientTime[client][Total] = rs.FetchInt(1);
+		}
+		
+		g_ClientTime[client][Fetched] = true;
+		
+		Call_StartForward(gF_OnGetClientTime);
+		Call_PushCell(client);
+		Call_PushCell(g_ClientTime[client][Recent]);
+		Call_PushCell(g_ClientTime[client][Total]);
+		Call_Finish();
 	}
 }
 
@@ -137,33 +138,39 @@ public void OnClientDisconnect(int client)
 
 public Action Command_Activity(int client, int args)
 {
-	if (client)
+	if (!client)
 	{
-		if (g_ClientTime[client][Fetched])
-		{
-			SetGlobalTransTarget(client);
-					
-			char buffer[128];
-			Panel panel = new Panel();
-			int mapTime = GetClientMapTime(client);
-
-			Format(buffer, sizeof(buffer), "%t", "Activity Title");
-			panel.SetTitle(buffer);
-
-			Format(buffer, sizeof(buffer), "%t", "Activity Recent", float(g_ClientTime[client][Recent] + mapTime) / 3600);
-			panel.DrawText(buffer);
+		ReplyToCommand(client, "[SM] %t", "Command is in-game only");
+		return Plugin_Handled;
+	}
+	
+	if (!g_ClientTime[client][Fetched])
+	{
+		ReplyToCommand(client, "[SM] %t", "Activity Unavailable");
+		return Plugin_Handled;
+	}
+	
+	SetGlobalTransTarget(client);
 			
-			Format(buffer, sizeof(buffer), "%t", "Activity Total", (g_ClientTime[client][Total] + mapTime) / 3600);
-			panel.DrawText(buffer);
-			
-			panel.DrawItem("", ITEMDRAW_SPACER);
-			panel.CurrentKey = GetMaxPageItems(panel.Style);
-			panel.DrawItem("Exit", ITEMDRAW_CONTROL);
+	char buffer[128];
+	Panel panel = new Panel();
+	int mapTime = GetClientMapTime(client);
 
-			panel.Send(client, Panel_DoNothing, MENU_TIME_FOREVER);
-			delete panel;
-		}
-	}	
+	Format(buffer, sizeof(buffer), "%t", "Activity Title");
+	panel.SetTitle(buffer);
+
+	Format(buffer, sizeof(buffer), "%t", "Activity Recent", float(g_ClientTime[client][Recent] + mapTime) / 3600);
+	panel.DrawText(buffer);
+	
+	Format(buffer, sizeof(buffer), "%t", "Activity Total", (g_ClientTime[client][Total] + mapTime) / 3600);
+	panel.DrawText(buffer);
+	
+	panel.DrawItem("", ITEMDRAW_SPACER);
+	panel.CurrentKey = GetMaxPageItems(panel.Style);
+	panel.DrawItem("Exit", ITEMDRAW_CONTROL);
+
+	panel.Send(client, Panel_DoNothing, MENU_TIME_FOREVER);
+	delete panel;
 	
 	return Plugin_Handled;
 }
@@ -172,30 +179,31 @@ public int Panel_DoNothing(Menu menu, MenuAction action, int param1, int param2)
 
 public void Database_FastQuery(Database db, DBResultSet rs, const char[] error, any data)
 {
-	if (rs)
-	{
-		return;
+	if (!rs) 
+	{	
+		LogError("Failed to query database: %s", error);
 	}
-	
-	LogError("Failed to query database: %s", error);
 }
 
 int GetClientMapTime(int client)
 {
 	float clientTime = GetClientTime(client), gameTime = GetGameTime();
-
+	
 	if (clientTime > gameTime)
 	{
 		return RoundToZero(gameTime);
 	}
-
+	
 	return RoundToZero(clientTime);
 }
+
+/* Natives and forwards for developers */
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char [] error, int err_max)
 {
 	CreateNative("Activity_GetClientRecentTime", Native_GetClientRecentTime);
 	CreateNative("Activity_GetClientTotalTime", Native_GetClientTotalTime);
+	
 	gF_OnGetClientTime = CreateGlobalForward("Activity_OnGetClientTime", ET_Event, Param_Cell, Param_Cell, Param_Cell);
 	
 	RegPluginLibrary("activity");
