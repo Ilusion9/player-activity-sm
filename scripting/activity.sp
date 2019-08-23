@@ -35,11 +35,7 @@ public void OnPluginStart()
 	for (int i = 1; i <= MaxClients; i++)
 	{
 		OnClientConnected(i);
-		
-		if (IsClientInGame(i))
-		{
-			OnClientPostAdminCheck(i);
-		}
+		if (IsClientInGame(i)) OnClientPostAdminCheck(i);
 	}
 }
 
