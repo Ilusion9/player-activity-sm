@@ -12,13 +12,13 @@ public Plugin myinfo =
     url = "https://github.com/Ilusion9/"
 };
 
-Database hDatabase;
-Handle g_ClientTimeForward;
+Database g_hDatabase;
+Handle g_hClientTimeForward;
 
-bool g_TimeFetched[MAXPLAYERS + 1];
+bool g_bHasTimeFetched[MAXPLAYERS + 1];
 
-int g_RecentTime[MAXPLAYERS + 1];
-int g_TotalTime[MAXPLAYERS + 1];
+int g_iRecentTime[MAXPLAYERS + 1];
+int g_iTotalTime[MAXPLAYERS + 1];
 
 public void OnPluginStart()
 {
@@ -52,7 +52,7 @@ public void Database_OnConnect(Database db, const char[] error, any data)
 		SetFailState("Could not connect to the database.");
 	}
 	
-	hDatabase = db;
+	g_hDatabase = db;
 	db.Query(Database_FastQuery, "CREATE TABLE IF NOT EXISTS players_activity_table (steamid INT UNSIGNED, date DATE, seconds INT UNSIGNED, PRIMARY KEY (steamid, date));");
 }
 
@@ -66,15 +66,15 @@ public void OnMapEnd()
 	data.AddQuery("INSERT INTO players_activity_table SELECT * FROM players_activity_table_temp;");
 	data.AddQuery("DROP TABLE players_activity_table_temp;");
 	
-	hDatabase.Execute(data);
+	g_hDatabase.Execute(data);
 }
 
 public void OnClientConnected(int client)
 {
-	g_TimeFetched[client] = false;
+	g_bHasTimeFetched[client] = false;
 	
-	g_RecentTime[client] = 0;
-	g_TotalTime[client] = 0;
+	g_iRecentTime[client] = 0;
+	g_iTotalTime[client] = 0;
 }
 
 public void OnClientPostAdminCheck(int client)
@@ -85,7 +85,7 @@ public void OnClientPostAdminCheck(int client)
 	{
 		char query[256];
 		Format(query, sizeof(query), "SELECT sum(CASE WHEN date >= CURRENT_DATE - INTERVAL 2 WEEK THEN seconds END), sum(seconds) FROM players_activity_table WHERE steamid = %d;", steamId);  
-		hDatabase.Query(Database_GetClientTime, query, GetClientUserId(client));
+		g_hDatabase.Query(Database_GetClientTime, query, GetClientUserId(client));
 	}
 }
 
@@ -103,16 +103,16 @@ public void Database_GetClientTime(Database db, DBResultSet rs, const char[] err
 	{		
 		if (rs.FetchRow())
 		{
-			g_RecentTime[client] = rs.FetchInt(0);
-			g_TotalTime[client] = rs.FetchInt(1);
+			g_iRecentTime[client] = rs.FetchInt(0);
+			g_iTotalTime[client] = rs.FetchInt(1);
 		}
 		
-		g_TimeFetched[client] = true;
+		g_bHasTimeFetched[client] = true;
 		
-		Call_StartForward(g_ClientTimeForward);
+		Call_StartForward(g_hClientTimeForward);
 		Call_PushCell(client);
-		Call_PushCell(g_RecentTime[client]);
-		Call_PushCell(g_TotalTime[client]);
+		Call_PushCell(g_iRecentTime[client]);
+		Call_PushCell(g_iTotalTime[client]);
 		Call_Finish();
 	}
 }
@@ -125,7 +125,7 @@ public void OnClientDisconnect(int client)
 	{		
 		char query[256];
 		Format(query, sizeof(query), "INSERT INTO players_activity_table (steamid, date, seconds) VALUES (%d, CURRENT_DATE, %d) ON DUPLICATE KEY UPDATE seconds = seconds + VALUES(seconds);", steamId, GetClientMapTime(client));
-		hDatabase.Query(Database_FastQuery, query);
+		g_hDatabase.Query(Database_FastQuery, query);
 	}
 }
 
@@ -137,7 +137,7 @@ public Action Command_Activity(int client, int args)
 		return Plugin_Handled;
 	}
 	
-	if (!g_TimeFetched[client])
+	if (!g_bHasTimeFetched[client])
 	{
 		ReplyToCommand(client, "[SM] %t", "Activity Unavailable");
 		return Plugin_Handled;
@@ -152,10 +152,10 @@ public Action Command_Activity(int client, int args)
 	Format(buffer, sizeof(buffer), "%t", "Activity Title");
 	panel.SetTitle(buffer);
 
-	Format(buffer, sizeof(buffer), "%t", "Activity Recent", float(g_RecentTime[client] + mapTime) / 3600);
+	Format(buffer, sizeof(buffer), "%t", "Activity Recent", float(g_iRecentTime[client] + mapTime) / 3600);
 	panel.DrawText(buffer);
 	
-	Format(buffer, sizeof(buffer), "%t", "Activity Total", (g_TotalTime[client] + mapTime) / 3600);
+	Format(buffer, sizeof(buffer), "%t", "Activity Total", (g_iTotalTime[client] + mapTime) / 3600);
 	panel.DrawText(buffer);
 	
 	panel.DrawItem("", ITEMDRAW_SPACER);
@@ -197,7 +197,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char [] error, int err_ma
 	CreateNative("Activity_GetClientRecentTime", Native_GetClientRecentTime);
 	CreateNative("Activity_GetClientTotalTime", Native_GetClientTotalTime);
 	
-	g_ClientTimeForward = CreateGlobalForward("Activity_OnGetClientTime", ET_Event, Param_Cell, Param_Cell, Param_Cell);
+	g_hClientTimeForward = CreateGlobalForward("Activity_OnFetchClientTime", ET_Event, Param_Cell, Param_Cell, Param_Cell);
 	
 	RegPluginLibrary("activity");
 	return APLRes_Success;
@@ -217,8 +217,8 @@ public int Native_GetClientRecentTime(Handle hPlugin, int numParams)
 		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not in game", client);
 	}
 	
-	SetNativeCellRef(2, g_RecentTime[client] + GetClientMapTime(client));
-	return g_TimeFetched[client];
+	SetNativeCellRef(2, g_iRecentTime[client] + GetClientMapTime(client));
+	return g_bHasTimeFetched[client];
 }
 
 public int Native_GetClientTotalTime(Handle hPlugin, int numParams)
@@ -235,6 +235,6 @@ public int Native_GetClientTotalTime(Handle hPlugin, int numParams)
 		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not in game", client);
 	}
 
-	SetNativeCellRef(2, g_TotalTime[client] + GetClientMapTime(client));
-	return g_TimeFetched[client];
+	SetNativeCellRef(2, g_iTotalTime[client] + GetClientMapTime(client));
+	return g_bHasTimeFetched[client];
 }
