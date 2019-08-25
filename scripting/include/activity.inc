@@ -4,7 +4,7 @@
 #define _activity_included
 
 /**
- * Called when the client's time is fetched from database (right after the OnClientPostAdminCheck event)
+ * Called when the client's time is fetched from database
  * 
  * @param	client		Client's index
  * @param	recentTime	Client's recent time in seconds (past two weeks)
