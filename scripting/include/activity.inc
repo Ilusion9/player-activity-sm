@@ -16,8 +16,8 @@
  * Returns the client's recent time (past two weeks)
  *
  * @param client		Client's index
- * @param recentTime	Client's recent time in seconds (past two weeks)
- * @return				True if the client's time was fetched from database
+ * @param recentTime		Client's recent time in seconds (past two weeks)
+ * @return			True if the client's time was fetched from database
  */
 native int Activity_GetClientRecentTime(int client, int &recentTime);
 
@@ -26,7 +26,7 @@ native int Activity_GetClientRecentTime(int client, int &recentTime);
  *
  * @param client		Client's index
  * @param totalTime		Client's total time in seconds
- * @return				True if the client's time was fetched from database
+ * @return			True if the client's time was fetched from database
  */
 native int Activity_GetClientTotalTime(int client, int &totalTime);
 
