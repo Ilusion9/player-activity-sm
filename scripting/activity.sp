@@ -26,8 +26,10 @@ public void OnPluginStart()
 	LoadTranslations("activity.phrases");
 	
 	Database.Connect(Database_OnConnect, "activity");
-	RegConsoleCmd("sm_activity", Command_Activity);
 	
+	RegConsoleCmd("sm_activity", Command_Activity);
+	RegConsoleCmd("sm_time", Command_Activity);
+
 	for (int i = 1; i <= MaxClients; i++)
 	{
 		OnClientConnected(i);
