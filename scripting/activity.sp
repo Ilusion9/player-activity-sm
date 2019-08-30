@@ -75,7 +75,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char [] error, int err_ma
 
 public int Native_GetClientRecentTime(Handle hPlugin, int numParams)
 {
-	int client = GetNativeCell(1);
+	int client = GetNativeCell(1); // get the first parameter
 	
 	if (client < 1 || client > MaxClients)
 	{
@@ -87,13 +87,13 @@ public int Native_GetClientRecentTime(Handle hPlugin, int numParams)
 		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not in game", client);
 	}
 	
-	SetNativeCellRef(2, g_iRecentTime[client] + GetClientMapTime(client));
+	SetNativeCellRef(2, g_iRecentTime[client] + GetClientMapTime(client)); // set the second parameter
 	return g_bHasTimeFetched[client];
 }
 
 public int Native_GetClientTotalTime(Handle hPlugin, int numParams)
 {
-	int client = GetNativeCell(1);
+	int client = GetNativeCell(1); // get the first parameter
 	
 	if (client < 1 || client > MaxClients)
 	{
@@ -105,7 +105,7 @@ public int Native_GetClientTotalTime(Handle hPlugin, int numParams)
 		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not in game", client);
 	}
 
-	SetNativeCellRef(2, g_iTotalTime[client] + GetClientMapTime(client));
+	SetNativeCellRef(2, g_iTotalTime[client] + GetClientMapTime(client)); // set the second parameter
 	return g_bHasTimeFetched[client];
 }
 
