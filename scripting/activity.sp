@@ -114,7 +114,6 @@ public void OnMapEnd()
 	/* Merge players data older than 2 weeks */
 
 	Transaction data = new Transaction();
-	
 	data.AddQuery("CREATE TEMPORARY TABLE players_activity_table_temp SELECT steamid, min(date), sum(seconds) FROM players_activity_table WHERE date < CURRENT_DATE - INTERVAL 2 WEEK GROUP BY steamid;");
 	data.AddQuery("DELETE FROM players_activity_table WHERE date < CURRENT_DATE - INTERVAL 2 WEEK;");
 	data.AddQuery("INSERT INTO players_activity_table SELECT * FROM players_activity_table_temp;");
