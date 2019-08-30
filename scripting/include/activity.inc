@@ -33,7 +33,6 @@ native int Activity_GetClientRecentTime(int client, int &recentTime);
 
 native int Activity_GetClientTotalTime(int client, int &totalTime);
 
-/* DO NOT EDIT BELOW THIS LINE */
 
 public SharedPlugin __pl_activity = 
 {
