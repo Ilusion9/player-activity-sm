@@ -12,8 +12,8 @@ public Plugin myinfo =
     url = "https://github.com/Ilusion9/"
 };
 
-Database g_hDatabase;
-Handle g_hClientTimeForward;
+Database g_Database;
+Handle g_Forward_ClientTime;
 
 bool g_bHasTimeFetched[MAXPLAYERS + 1];
 
@@ -45,6 +45,8 @@ public void Database_OnConnect(Database db, const char[] error, any data)
 		SetFailState("Could not connect to the database.");
 	}
 	
+	/* Check if the database is different than mysql */
+	
 	char buffer[64];
 	db.Driver.GetIdentifier(buffer, sizeof(buffer));
 	
@@ -53,14 +55,64 @@ public void Database_OnConnect(Database db, const char[] error, any data)
 		LogError("Could not connect to the database: expected mysql database.");
 		SetFailState("Could not connect to the database.");
 	}
-	
-	g_hDatabase = db;
+		
+	g_Database = db;
 	db.Query(Database_FastQuery, "CREATE TABLE IF NOT EXISTS players_activity_table (steamid INT UNSIGNED, date DATE, seconds INT UNSIGNED, PRIMARY KEY (steamid, date));");
+}
+
+public APLRes AskPluginLoad2(Handle myself, bool late, char [] error, int err_max)
+{
+	/* Natives and forwards for developers */
+	
+	CreateNative("Activity_GetClientRecentTime", Native_GetClientRecentTime);
+	CreateNative("Activity_GetClientTotalTime", Native_GetClientTotalTime);
+	
+	g_Forward_ClientTime = CreateGlobalForward("Activity_OnFetchClientTime", ET_Event, Param_Cell, Param_Cell, Param_Cell);
+	
+	RegPluginLibrary("activity");
+	return APLRes_Success;
+}
+
+public int Native_GetClientRecentTime(Handle hPlugin, int numParams)
+{
+	int client = GetNativeCell(1);
+	
+	if (client < 1 || client > MaxClients)
+	{
+		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid client index %d", client);
+	}
+	
+	if (!IsClientInGame(client))
+	{
+		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not in game", client);
+	}
+	
+	SetNativeCellRef(2, g_iRecentTime[client] + GetClientMapTime(client));
+	return g_bHasTimeFetched[client];
+}
+
+public int Native_GetClientTotalTime(Handle hPlugin, int numParams)
+{
+	int client = GetNativeCell(1);
+	
+	if (client < 1 || client > MaxClients)
+	{
+		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid client index %d", client);
+	}
+	
+	if (!IsClientInGame(client))
+	{
+		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not in game", client);
+	}
+
+	SetNativeCellRef(2, g_iTotalTime[client] + GetClientMapTime(client));
+	return g_bHasTimeFetched[client];
 }
 
 public void OnMapEnd()
 {
 	/* Merge players data older than 2 weeks */
+
 	Transaction data = new Transaction();
 	
 	data.AddQuery("CREATE TEMPORARY TABLE players_activity_table_temp SELECT steamid, min(date), sum(seconds) FROM players_activity_table WHERE date < CURRENT_DATE - INTERVAL 2 WEEK GROUP BY steamid;");
@@ -68,7 +120,7 @@ public void OnMapEnd()
 	data.AddQuery("INSERT INTO players_activity_table SELECT * FROM players_activity_table_temp;");
 	data.AddQuery("DROP TABLE players_activity_table_temp;");
 	
-	g_hDatabase.Execute(data);
+	g_Database.Execute(data);
 }
 
 public void OnClientConnected(int client)
@@ -87,7 +139,7 @@ public void OnClientPostAdminCheck(int client)
 	{
 		char query[256];
 		Format(query, sizeof(query), "SELECT sum(CASE WHEN date >= CURRENT_DATE - INTERVAL 2 WEEK THEN seconds END), sum(seconds) FROM players_activity_table WHERE steamid = %d;", steamId);  
-		g_hDatabase.Query(Database_GetClientTime, query, GetClientUserId(client));
+		g_Database.Query(Database_GetClientTime, query, GetClientUserId(client));
 	}
 }
 
@@ -110,8 +162,8 @@ public void Database_GetClientTime(Database db, DBResultSet rs, const char[] err
 		}
 		
 		g_bHasTimeFetched[client] = true;
-		
-		Call_StartForward(g_hClientTimeForward);
+				
+		Call_StartForward(g_Forward_ClientTime);
 		Call_PushCell(client);
 		Call_PushCell(g_iRecentTime[client]);
 		Call_PushCell(g_iTotalTime[client]);
@@ -127,7 +179,7 @@ public void OnClientDisconnect(int client)
 	{		
 		char query[256];
 		Format(query, sizeof(query), "INSERT INTO players_activity_table (steamid, date, seconds) VALUES (%d, CURRENT_DATE, %d) ON DUPLICATE KEY UPDATE seconds = seconds + VALUES(seconds);", steamId, GetClientMapTime(client));
-		g_hDatabase.Query(Database_FastQuery, query);
+		g_Database.Query(Database_FastQuery, query);
 	}
 }
 
@@ -190,53 +242,4 @@ int GetClientMapTime(int client)
 	}
 	
 	return RoundToZero(clientTime);
-}
-
-/* Natives and forwards for developers */
-
-public APLRes AskPluginLoad2(Handle myself, bool late, char [] error, int err_max)
-{
-	CreateNative("Activity_GetClientRecentTime", Native_GetClientRecentTime);
-	CreateNative("Activity_GetClientTotalTime", Native_GetClientTotalTime);
-	
-	g_hClientTimeForward = CreateGlobalForward("Activity_OnFetchClientTime", ET_Event, Param_Cell, Param_Cell, Param_Cell);
-	
-	RegPluginLibrary("activity");
-	return APLRes_Success;
-}
-
-public int Native_GetClientRecentTime(Handle hPlugin, int numParams)
-{
-	int client = GetNativeCell(1);
-	
-	if (client < 1 || client > MaxClients)
-	{
-		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid client index %d", client);
-	}
-	
-	if (!IsClientInGame(client))
-	{
-		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not in game", client);
-	}
-	
-	SetNativeCellRef(2, g_iRecentTime[client] + GetClientMapTime(client));
-	return g_bHasTimeFetched[client];
-}
-
-public int Native_GetClientTotalTime(Handle hPlugin, int numParams)
-{
-	int client = GetNativeCell(1);
-	
-	if (client < 1 || client > MaxClients)
-	{
-		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid client index %d", client);
-	}
-	
-	if (!IsClientInGame(client))
-	{
-		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not in game", client);
-	}
-
-	SetNativeCellRef(2, g_iTotalTime[client] + GetClientMapTime(client));
-	return g_bHasTimeFetched[client];
 }
