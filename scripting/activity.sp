@@ -20,6 +20,19 @@ bool g_bHasTimeFetched[MAXPLAYERS + 1];
 int g_iRecentTime[MAXPLAYERS + 1];
 int g_iTotalTime[MAXPLAYERS + 1];
 
+public APLRes AskPluginLoad2(Handle myself, bool late, char [] error, int err_max)
+{
+	/* Natives and forwards for developers */
+	
+	CreateNative("Activity_GetClientRecentTime", Native_GetClientRecentTime);
+	CreateNative("Activity_GetClientTotalTime", Native_GetClientTotalTime);
+	
+	g_Forward_ClientTime = CreateGlobalForward("Activity_OnFetchClientTime", ET_Event, Param_Cell, Param_Cell, Param_Cell);
+	
+	RegPluginLibrary("activity");
+	return APLRes_Success;
+}
+
 public void OnPluginStart()
 {
 	LoadTranslations("common.phrases");
@@ -58,55 +71,6 @@ public void Database_OnConnect(Database db, const char[] error, any data)
 		
 	g_Database = db;
 	db.Query(Database_FastQuery, "CREATE TABLE IF NOT EXISTS players_activity_table (steamid INT UNSIGNED, date DATE, seconds INT UNSIGNED, PRIMARY KEY (steamid, date));");
-}
-
-public APLRes AskPluginLoad2(Handle myself, bool late, char [] error, int err_max)
-{
-	/* Natives and forwards for developers */
-	
-	CreateNative("Activity_GetClientRecentTime", Native_GetClientRecentTime);
-	CreateNative("Activity_GetClientTotalTime", Native_GetClientTotalTime);
-	
-	g_Forward_ClientTime = CreateGlobalForward("Activity_OnFetchClientTime", ET_Event, Param_Cell, Param_Cell, Param_Cell);
-	
-	RegPluginLibrary("activity");
-	return APLRes_Success;
-}
-
-public int Native_GetClientRecentTime(Handle hPlugin, int numParams)
-{
-	int client = GetNativeCell(1); // get the first parameter
-	
-	if (client < 1 || client > MaxClients)
-	{
-		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid client index %d", client);
-	}
-	
-	if (!IsClientInGame(client))
-	{
-		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not in game", client);
-	}
-	
-	SetNativeCellRef(2, g_iRecentTime[client] + GetClientMapTime(client)); // set the second parameter
-	return g_bHasTimeFetched[client];
-}
-
-public int Native_GetClientTotalTime(Handle hPlugin, int numParams)
-{
-	int client = GetNativeCell(1); // get the first parameter
-	
-	if (client < 1 || client > MaxClients)
-	{
-		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid client index %d", client);
-	}
-	
-	if (!IsClientInGame(client))
-	{
-		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not in game", client);
-	}
-
-	SetNativeCellRef(2, g_iTotalTime[client] + GetClientMapTime(client)); // set the second parameter
-	return g_bHasTimeFetched[client];
 }
 
 public void OnMapEnd()
@@ -241,4 +205,40 @@ int GetClientMapTime(int client)
 	}
 	
 	return RoundToZero(clientTime);
+}
+
+public int Native_GetClientRecentTime(Handle hPlugin, int numParams)
+{
+	int client = GetNativeCell(1);
+	
+	if (client < 1 || client > MaxClients)
+	{
+		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid client index %d", client);
+	}
+	
+	if (!IsClientInGame(client))
+	{
+		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not in game", client);
+	}
+	
+	SetNativeCellRef(2, g_iRecentTime[client] + GetClientMapTime(client));
+	return g_bHasTimeFetched[client];
+}
+
+public int Native_GetClientTotalTime(Handle hPlugin, int numParams)
+{
+	int client = GetNativeCell(1);
+	
+	if (client < 1 || client > MaxClients)
+	{
+		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid client index %d", client);
+	}
+	
+	if (!IsClientInGame(client))
+	{
+		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not in game", client);
+	}
+
+	SetNativeCellRef(2, g_iTotalTime[client] + GetClientMapTime(client));
+	return g_bHasTimeFetched[client];
 }
