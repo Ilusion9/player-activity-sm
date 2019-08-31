@@ -30,6 +30,8 @@ native bool Activity_GetClientRecentTime(int client, int &recentTime);
  */
 native bool Activity_GetClientTotalTime(int client, int &totalTime);
 
+/* DO NOT EDIT BELOW THIS LINE */
+
 public SharedPlugin __pl_activity = 
 {
 	name = "activity",
