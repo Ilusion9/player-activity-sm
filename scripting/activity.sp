@@ -207,6 +207,8 @@ int GetClientMapTime(int client)
 	return RoundToZero(clientTime);
 }
 
+/* Native handler for bool Activity_GetClientRecentTime(int client, int &recentTime) */
+
 public int Native_GetClientRecentTime(Handle hPlugin, int numParams)
 {
 	int client = GetNativeCell(1);
@@ -224,6 +226,8 @@ public int Native_GetClientRecentTime(Handle hPlugin, int numParams)
 	SetNativeCellRef(2, g_iRecentTime[client] + GetClientMapTime(client));
 	return g_bHasTimeFetched[client];
 }
+
+/* Native handler for bool Activity_GetClientTotalTime(int client, int &totalTime) */
 
 public int Native_GetClientTotalTime(Handle hPlugin, int numParams)
 {
