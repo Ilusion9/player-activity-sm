@@ -4,7 +4,7 @@
 #include <sourcemod>
 
 public Plugin myinfo =
-{ 
+{
     name = "Players Activity",
     author = "Ilusion9",
     description = "Informations of players activity",
