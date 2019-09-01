@@ -189,8 +189,7 @@ public int Panel_DoNothing(Menu menu, MenuAction action, int param1, int param2)
 
 public void Database_FastQuery(Database db, DBResultSet rs, const char[] error, any data)
 {
-	if (!rs) 
-	{	
+	if (!rs) {	
 		LogError("Failed to query database: %s", error);
 	}
 }
@@ -199,8 +198,7 @@ int GetClientMapTime(int client)
 {
 	float clientTime = GetClientTime(client), gameTime = GetGameTime();
 	
-	if (clientTime > gameTime)
-	{
+	if (clientTime > gameTime) {
 		return RoundToZero(gameTime);
 	}
 	
@@ -213,13 +211,11 @@ public int Native_GetClientRecentTime(Handle hPlugin, int numParams)
 {
 	int client = GetNativeCell(1);
 	
-	if (client < 1 || client > MaxClients)
-	{
+	if (client < 1 || client > MaxClients) {
 		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid client index %d", client);
 	}
 	
-	if (!IsClientInGame(client))
-	{
+	if (!IsClientInGame(client)) {
 		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not in game", client);
 	}
 	
@@ -233,13 +229,11 @@ public int Native_GetClientTotalTime(Handle hPlugin, int numParams)
 {
 	int client = GetNativeCell(1);
 	
-	if (client < 1 || client > MaxClients)
-	{
+	if (client < 1 || client > MaxClients) {
 		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid client index %d", client);
 	}
 	
-	if (!IsClientInGame(client))
-	{
+	if (!IsClientInGame(client)) {
 		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not in game", client);
 	}
 
