@@ -23,10 +23,8 @@ int g_iTotalTime[MAXPLAYERS + 1];
 public APLRes AskPluginLoad2(Handle myself, bool late, char [] error, int err_max)
 {
 	/* Natives and forwards for developers */
-	
 	CreateNative("Activity_GetClientRecentTime", Native_GetClientRecentTime);
 	CreateNative("Activity_GetClientTotalTime", Native_GetClientTotalTime);
-	
 	g_Forward_ClientTime = CreateGlobalForward("Activity_OnFetchClientTime", ET_Event, Param_Cell, Param_Cell, Param_Cell);
 	
 	RegPluginLibrary("activity");
@@ -58,8 +56,6 @@ public void Database_OnConnect(Database db, const char[] error, any data)
 		SetFailState("Could not connect to the database.");
 	}
 	
-	/* Check if the database is different than mysql */
-	
 	char buffer[64];
 	db.Driver.GetIdentifier(buffer, sizeof(buffer));
 	
@@ -76,8 +72,8 @@ public void Database_OnConnect(Database db, const char[] error, any data)
 public void OnMapEnd()
 {
 	/* Merge players data older than 2 weeks */
-
 	Transaction data = new Transaction();
+	
 	data.AddQuery("CREATE TEMPORARY TABLE players_activity_table_temp SELECT steamid, min(date), sum(seconds) FROM players_activity_table WHERE date < CURRENT_DATE - INTERVAL 2 WEEK GROUP BY steamid;");
 	data.AddQuery("DELETE FROM players_activity_table WHERE date < CURRENT_DATE - INTERVAL 2 WEEK;");
 	data.AddQuery("INSERT INTO players_activity_table SELECT * FROM players_activity_table_temp;");
@@ -205,8 +201,9 @@ int GetClientMapTime(int client)
 	return RoundToZero(clientTime);
 }
 
-/* Native handler for bool Activity_GetClientRecentTime(int client, int &recentTime) */
-
+/**
+ * Native handler for bool Activity_GetClientRecentTime(int client, int &recentTime)
+ */
 public int Native_GetClientRecentTime(Handle hPlugin, int numParams)
 {
 	int client = GetNativeCell(1);
@@ -223,8 +220,9 @@ public int Native_GetClientRecentTime(Handle hPlugin, int numParams)
 	return g_bHasTimeFetched[client];
 }
 
-/* Native handler for bool Activity_GetClientTotalTime(int client, int &totalTime) */
-
+/**
+ * Native handler for bool Activity_GetClientTotalTime(int client, int &totalTime) 
+ */
 public int Native_GetClientTotalTime(Handle hPlugin, int numParams)
 {
 	int client = GetNativeCell(1);
