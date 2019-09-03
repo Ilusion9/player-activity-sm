@@ -1,6 +1,8 @@
 # Players activity
 This plugin will display informations of player's activity on the server.
 
+Alliedmods: https://forums.alliedmods.net/showthread.php?p=2625964
+
 # Database configuration
 ```
 "activity" 
