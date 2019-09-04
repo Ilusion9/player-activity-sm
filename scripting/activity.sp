@@ -13,7 +13,7 @@ public Plugin myinfo =
 };
 
 Database g_Database;
-Handle g_Forward_ClientTime;
+Handle g_ClientTimeForward;
 
 bool g_hasTimeFetched[MAXPLAYERS + 1];
 
@@ -22,10 +22,8 @@ int g_TotalTime[MAXPLAYERS + 1];
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char [] error, int err_max)
 {
-	/* Natives and forwards for developers */
 	CreateNative("Activity_GetClientRecentTime", Native_GetClientRecentTime);
 	CreateNative("Activity_GetClientTotalTime", Native_GetClientTotalTime);
-	g_Forward_ClientTime = CreateGlobalForward("Activity_OnFetchClientTime", ET_Event, Param_Cell, Param_Cell, Param_Cell);
 	
 	RegPluginLibrary("activity");
 	return APLRes_Success;
@@ -46,6 +44,8 @@ public void OnPluginStart()
 		OnClientConnected(i);
 		if (IsClientInGame(i)) OnClientPostAdminCheck(i);
 	}
+	
+	g_ClientTimeForward = CreateGlobalForward("Activity_OnFetchClientTime", ET_Event, Param_Cell, Param_Cell, Param_Cell);
 }
 
 public void Database_OnConnect(Database db, const char[] error, any data)
@@ -122,7 +122,7 @@ public void Database_GetClientTime(Database db, DBResultSet rs, const char[] err
 		
 		g_hasTimeFetched[client] = true;
 				
-		Call_StartForward(g_Forward_ClientTime);
+		Call_StartForward(g_ClientTimeForward);
 		Call_PushCell(client);
 		Call_PushCell(g_RecentTime[client]);
 		Call_PushCell(g_TotalTime[client]);
