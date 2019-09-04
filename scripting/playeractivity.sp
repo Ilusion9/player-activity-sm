@@ -25,16 +25,16 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char [] error, int err_ma
 	CreateNative("Activity_GetClientRecentTime", Native_GetClientRecentTime);
 	CreateNative("Activity_GetClientTotalTime", Native_GetClientTotalTime);
 	
-	RegPluginLibrary("activity");
+	RegPluginLibrary("playeractivity");
 	return APLRes_Success;
 }
 
 public void OnPluginStart()
 {
 	LoadTranslations("common.phrases");
-	LoadTranslations("activity.phrases");
+	LoadTranslations("playeractivity.phrases");
 	
-	Database.Connect(Database_OnConnect, "activity");
+	Database.Connect(Database_OnConnect, "playeractivity");
 	
 	RegConsoleCmd("sm_activity", Command_ShowActivity);
 	RegConsoleCmd("sm_time", Command_ShowActivity);
