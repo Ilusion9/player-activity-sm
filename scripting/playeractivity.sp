@@ -5,7 +5,7 @@
 
 public Plugin myinfo =
 {
-    name = "Players Activity",
+    name = "Player Activity",
     author = "Ilusion9",
     description = "Informations of players activity",
     version = "2.5",
