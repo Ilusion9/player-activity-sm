@@ -1,7 +1,7 @@
-#if defined _activity_included
+#if defined _playeractivity_included
  #endinput
 #endif
-#define _activity_included
+#define _playeractivity_included
 
 /**
  * Called when the client's time is fetched from database
@@ -16,8 +16,8 @@ forward void Activity_OnFetchClientTime(int client, int recentTime, int totalTim
  * Returns the client's recent time (past two weeks)
  *
  * @param client		Client's index
- * @param recentTime		Client's recent time in seconds (past two weeks)
- * @return			True if the client's time was fetched from database
+ * @param recentTime	Client's recent time in seconds (past two weeks)
+ * @return				True if the client's time was fetched from database
  */
 native bool Activity_GetClientRecentTime(int client, int &recentTime);
 
@@ -26,16 +26,16 @@ native bool Activity_GetClientRecentTime(int client, int &recentTime);
  *
  * @param client		Client's index
  * @param totalTime		Client's total time in seconds
- * @return			True if the client's time was fetched from database
+ * @return				True if the client's time was fetched from database
  */
 native bool Activity_GetClientTotalTime(int client, int &totalTime);
 
 /* DO NOT EDIT BELOW THIS LINE */
 
-public SharedPlugin __pl_activity = 
+public SharedPlugin __pl_playeractivity = 
 {
-	name = "activity",
-	file = "activity.smx",
+	name = "playeractivity",
+	file = "playeractivity.smx",
 #if defined REQUIRE_PLUGIN
 	required = 1,
 #else
@@ -44,7 +44,7 @@ public SharedPlugin __pl_activity =
 };
 
 #if !defined REQUIRE_PLUGIN
-public void __pl_activity_SetNTVOptional()
+public void __pl_playeractivity_SetNTVOptional()
 {
 	MarkNativeAsOptional("Activity_GetClientRecentTime");
 	MarkNativeAsOptional("Activity_GetClientTotalTime");
