@@ -15,7 +15,7 @@ public Plugin myinfo =
 Database g_Database;
 Handle g_Forward_ClientTime;
 
-bool g_hasTimeFetched[MAXPLAYERS + 1];
+bool g_HasTimeFetched[MAXPLAYERS + 1];
 
 int g_RecentTime[MAXPLAYERS + 1];
 int g_TotalTime[MAXPLAYERS + 1];
@@ -84,7 +84,7 @@ public void OnMapEnd()
 
 public void OnClientConnected(int client)
 {
-	g_hasTimeFetched[client] = false;
+	g_HasTimeFetched[client] = false;
 	
 	g_RecentTime[client] = 0;
 	g_TotalTime[client] = 0;
@@ -120,7 +120,7 @@ public void Database_GetClientTime(Database db, DBResultSet rs, const char[] err
 			g_TotalTime[client] = rs.FetchInt(1);
 		}
 		
-		g_hasTimeFetched[client] = true;
+		g_HasTimeFetched[client] = true;
 				
 		Call_StartForward(g_Forward_ClientTime);
 		Call_PushCell(client);
@@ -150,7 +150,7 @@ public Action Command_ShowActivity(int client, int args)
 		return Plugin_Handled;
 	}
 	
-	if (!g_hasTimeFetched[client])
+	if (!g_HasTimeFetched[client])
 	{
 		ReplyToCommand(client, "[SM] %t", "Activity Unavailable");
 		return Plugin_Handled;
@@ -215,7 +215,7 @@ public int Native_GetClientRecentTime(Handle hPlugin, int numParams)
 	}
 	
 	SetNativeCellRef(2, g_RecentTime[client] + GetClientMapTime(client));
-	return g_hasTimeFetched[client];
+	return g_HasTimeFetched[client];
 }
 
 /* Native handler for bool Activity_GetClientTotalTime(int client, int &totalTime) */
@@ -232,5 +232,5 @@ public int Native_GetClientTotalTime(Handle hPlugin, int numParams)
 	}
 
 	SetNativeCellRef(2, g_TotalTime[client] + GetClientMapTime(client));
-	return g_hasTimeFetched[client];
+	return g_HasTimeFetched[client];
 }
