@@ -13,7 +13,7 @@ public Plugin myinfo =
 };
 
 Database g_Database;
-Handle g_ClientTimeForward;
+Handle g_Forward_ClientTime;
 
 bool g_hasTimeFetched[MAXPLAYERS + 1];
 
@@ -45,7 +45,7 @@ public void OnPluginStart()
 		if (IsClientInGame(i)) OnClientPostAdminCheck(i);
 	}
 	
-	g_ClientTimeForward = CreateGlobalForward("Activity_OnFetchClientTime", ET_Event, Param_Cell, Param_Cell, Param_Cell);
+	g_Forward_ClientTime = CreateGlobalForward("Activity_OnFetchClientTime", ET_Event, Param_Cell, Param_Cell, Param_Cell);
 }
 
 public void Database_OnConnect(Database db, const char[] error, any data)
@@ -122,7 +122,7 @@ public void Database_GetClientTime(Database db, DBResultSet rs, const char[] err
 		
 		g_hasTimeFetched[client] = true;
 				
-		Call_StartForward(g_ClientTimeForward);
+		Call_StartForward(g_Forward_ClientTime);
 		Call_PushCell(client);
 		Call_PushCell(g_RecentTime[client]);
 		Call_PushCell(g_TotalTime[client]);
