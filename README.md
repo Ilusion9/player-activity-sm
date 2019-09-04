@@ -5,7 +5,7 @@ Alliedmods: https://forums.alliedmods.net/showthread.php?p=2625964
 
 # Database configuration
 ```
-"activity" 
+"playeractivity" 
 { 
     "driver"            "mysql" // only mysql
     "host"                "" 
