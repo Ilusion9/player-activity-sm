@@ -42,7 +42,10 @@ public void OnPluginStart()
 	for (int i = 1; i <= MaxClients; i++)
 	{
 		OnClientConnected(i);
-		if (IsClientInGame(i)) OnClientPostAdminCheck(i);
+		
+		if (IsClientInGame(i)) {
+			OnClientPostAdminCheck(i);
+		}
 	}
 	
 	g_Forward_ClientTime = CreateGlobalForward("Activity_OnFetchClientTime", ET_Event, Param_Cell, Param_Cell, Param_Cell);
@@ -66,7 +69,7 @@ public void Database_OnConnect(Database db, const char[] error, any data)
 	}
 		
 	g_Database = db;
-	db.Query(Database_FastQuery, "CREATE TABLE IF NOT EXISTS players_activity_table (steamid INT UNSIGNED, date DATE, seconds INT UNSIGNED, PRIMARY KEY (steamid, date));");
+	db.Query(Database_FastQuery, "CREATE TABLE IF NOT EXISTS players_activity (steamid INT UNSIGNED, date DATE, seconds INT UNSIGNED, PRIMARY KEY (steamid, date));");
 }
 
 public void OnMapEnd()
@@ -74,10 +77,10 @@ public void OnMapEnd()
 	/* Merge players data older than 2 weeks */
 	Transaction data = new Transaction();
 	
-	data.AddQuery("CREATE TEMPORARY TABLE players_activity_table_temp SELECT steamid, min(date), sum(seconds) FROM players_activity_table WHERE date < CURRENT_DATE - INTERVAL 2 WEEK GROUP BY steamid;");
-	data.AddQuery("DELETE FROM players_activity_table WHERE date < CURRENT_DATE - INTERVAL 2 WEEK;");
-	data.AddQuery("INSERT INTO players_activity_table SELECT * FROM players_activity_table_temp;");
-	data.AddQuery("DROP TABLE players_activity_table_temp;");
+	data.AddQuery("CREATE TEMPORARY TABLE players_activity_temp SELECT steamid, min(date), sum(seconds) FROM players_activity WHERE date < CURRENT_DATE - INTERVAL 2 WEEK GROUP BY steamid;");
+	data.AddQuery("DELETE FROM players_activity WHERE date < CURRENT_DATE - INTERVAL 2 WEEK;");
+	data.AddQuery("INSERT INTO players_activity SELECT * FROM players_activity_temp;");
+	data.AddQuery("DROP TABLE players_activity_temp;");
 	
 	g_Database.Execute(data);
 }
@@ -97,7 +100,7 @@ public void OnClientPostAdminCheck(int client)
 	if (steamId)
 	{
 		char query[256];
-		Format(query, sizeof(query), "SELECT sum(CASE WHEN date >= CURRENT_DATE - INTERVAL 2 WEEK THEN seconds END), sum(seconds) FROM players_activity_table WHERE steamid = %d;", steamId);  
+		Format(query, sizeof(query), "SELECT sum(CASE WHEN date >= CURRENT_DATE - INTERVAL 2 WEEK THEN seconds END), sum(seconds) FROM players_activity WHERE steamid = %d;", steamId);  
 		g_Database.Query(Database_GetClientTime, query, GetClientUserId(client));
 	}
 }
@@ -137,7 +140,7 @@ public void OnClientDisconnect(int client)
 	if (steamId)
 	{		
 		char query[256];
-		Format(query, sizeof(query), "INSERT INTO players_activity_table (steamid, date, seconds) VALUES (%d, CURRENT_DATE, %d) ON DUPLICATE KEY UPDATE seconds = seconds + VALUES(seconds);", steamId, GetClientMapTime(client));
+		Format(query, sizeof(query), "INSERT INTO players_activity (steamid, date, seconds) VALUES (%d, CURRENT_DATE, %d) ON DUPLICATE KEY UPDATE seconds = seconds + VALUES(seconds);", steamId, GetClientMapTime(client));
 		g_Database.Query(Database_FastQuery, query);
 	}
 }
