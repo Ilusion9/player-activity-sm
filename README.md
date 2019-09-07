@@ -17,6 +17,12 @@ Alliedmods: https://forums.alliedmods.net/showthread.php?p=2625964
 } 
 ```
 
+# Commands
+```
+sm_activity - will show the player's activity on the server
+sm_time - same as sm_activity
+```
+
 # Example of output
 ```
 Activity
