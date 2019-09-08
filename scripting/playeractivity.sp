@@ -38,14 +38,11 @@ public void OnPluginStart()
 	
 	RegConsoleCmd("sm_activity", Command_ShowActivity);
 	RegConsoleCmd("sm_time", Command_ShowActivity);
-
+	
 	for (int i = 1; i <= MaxClients; i++)
 	{
 		OnClientConnected(i);
-		
-		if (IsClientInGame(i)) {
-			OnClientPostAdminCheck(i);
-		}
+		if (IsClientInGame(i)) OnClientPostAdminCheck(i);
 	}
 	
 	g_Forward_ClientTime = CreateGlobalForward("Activity_OnFetchClientTime", ET_Event, Param_Cell, Param_Cell, Param_Cell);
@@ -67,7 +64,7 @@ public void Database_OnConnect(Database db, const char[] error, any data)
 		LogError("Could not connect to the database: expected mysql database.");
 		SetFailState("Could not connect to the database.");
 	}
-		
+	
 	g_Database = db;
 	db.Query(Database_FastQuery, "CREATE TABLE IF NOT EXISTS players_activity (steamid INT UNSIGNED, date DATE, seconds INT UNSIGNED, PRIMARY KEY (steamid, date));");
 }
@@ -107,12 +104,10 @@ public void OnClientPostAdminCheck(int client)
 
 public void Database_GetClientTime(Database db, DBResultSet rs, const char[] error, any data)
 {
-	if (!rs)
-	{
-		LogError("Failed to query database: %s", error);
-		return;
+	if (!rs) {
+		ThrowError("Failed to query database: %s", error);
 	}
-		
+	
 	int client = GetClientOfUserId(view_as<int>(data));
 
 	if (client)
@@ -160,7 +155,7 @@ public Action Command_ShowActivity(int client, int args)
 	}
 	
 	SetGlobalTransTarget(client);
-			
+	
 	char buffer[128];
 	Panel panel = new Panel();
 	int mapTime = GetClientMapTime(client);
@@ -189,7 +184,7 @@ public int Panel_DoNothing(Menu menu, MenuAction action, int param1, int param2)
 public void Database_FastQuery(Database db, DBResultSet rs, const char[] error, any data)
 {
 	if (!rs) {	
-		LogError("Failed to query database: %s", error);
+		ThrowError("Failed to query database: %s", error);
 	}
 }
 
