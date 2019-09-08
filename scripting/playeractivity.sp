@@ -94,13 +94,12 @@ public void OnClientPostAdminCheck(int client)
 {
 	int steamId = GetSteamAccountID(client);
 	
-	if (!steamId) {
-		return;
+	if (steamId)
+	{
+		char query[256];
+		Format(query, sizeof(query), "SELECT sum(CASE WHEN date >= CURRENT_DATE - INTERVAL 2 WEEK THEN seconds END), sum(seconds) FROM players_activity WHERE steamid = %d;", steamId);  
+		g_Database.Query(Database_GetClientTime, query, GetClientUserId(client));
 	}
-	
-	char query[256];
-	Format(query, sizeof(query), "SELECT sum(CASE WHEN date >= CURRENT_DATE - INTERVAL 2 WEEK THEN seconds END), sum(seconds) FROM players_activity WHERE steamid = %d;", steamId);  
-	g_Database.Query(Database_GetClientTime, query, GetClientUserId(client));
 }
 
 public void Database_GetClientTime(Database db, DBResultSet rs, const char[] error, any data)
@@ -134,13 +133,12 @@ public void OnClientDisconnect(int client)
 {
 	int steamId = GetSteamAccountID(client);
 	
-	if (!steamId) {
-		return;
+	if (steamId)
+	{
+		char query[256];
+		Format(query, sizeof(query), "INSERT INTO players_activity (steamid, date, seconds) VALUES (%d, CURRENT_DATE, %d) ON DUPLICATE KEY UPDATE seconds = seconds + VALUES(seconds);", steamId, GetClientMapTime(client));
+		g_Database.Query(Database_FastQuery, query);
 	}
-	
-	char query[256];
-	Format(query, sizeof(query), "INSERT INTO players_activity (steamid, date, seconds) VALUES (%d, CURRENT_DATE, %d) ON DUPLICATE KEY UPDATE seconds = seconds + VALUES(seconds);", steamId, GetClientMapTime(client));
-	g_Database.Query(Database_FastQuery, query);
 }
 
 public Action Command_ShowActivity(int client, int args)
