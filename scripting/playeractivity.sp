@@ -105,7 +105,8 @@ public void OnClientPostAdminCheck(int client)
 public void Database_GetClientTime(Database db, DBResultSet rs, const char[] error, any data)
 {
 	if (!rs) {
-		ThrowError("Failed to query database: %s", error);
+		LogError("Failed to query database: %s", error);
+		return;
 	}
 	
 	int client = GetClientOfUserId(view_as<int>(data));
@@ -185,7 +186,7 @@ public int Panel_DoNothing(Menu menu, MenuAction action, int param1, int param2)
 public void Database_FastQuery(Database db, DBResultSet rs, const char[] error, any data)
 {
 	if (!rs) {	
-		ThrowError("Failed to query database: %s", error);
+		LogError("Failed to query database: %s", error);
 	}
 }
 
