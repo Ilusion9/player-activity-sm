@@ -30,3 +30,6 @@ Activity
 22 hours - past two weeks
 335 hours - total
 ```
+
+# Forwards and natives
+https://github.com/Ilusion9/sm-player-activity/wiki/Forwards-and-natives
