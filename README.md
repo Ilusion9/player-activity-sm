@@ -1,5 +1,5 @@
 # Player activity
-This plugin will display informations of player's activity on the server.
+This plugin will display informations about the players activity on the server.
 
 Alliedmods: https://forums.alliedmods.net/showthread.php?p=2625964
 
