@@ -35,17 +35,16 @@ public void OnPluginStart()
 	LoadTranslations("playeractivity.phrases");
 	
 	Database.Connect(Database_OnConnect, "playeractivity");
-	
+	g_Forward_ClientTime = CreateGlobalForward("Activity_OnFetchClientTime", ET_Event, Param_Cell, Param_Cell, Param_Cell);
+
 	RegConsoleCmd("sm_activity", Command_ShowActivity);
 	RegConsoleCmd("sm_time", Command_ShowActivity);
-	
-	g_Forward_ClientTime = CreateGlobalForward("Activity_OnFetchClientTime", ET_Event, Param_Cell, Param_Cell, Param_Cell);
-	
+
 	for (int i = 1; i <= MaxClients; i++)
 	{
-		OnClientConnected(i);
 		if (IsClientInGame(i))
 		{
+			OnClientConnected(i);
 			OnClientPostAdminCheck(i);
 		}
 	}
