@@ -39,13 +39,16 @@ public void OnPluginStart()
 	RegConsoleCmd("sm_activity", Command_ShowActivity);
 	RegConsoleCmd("sm_time", Command_ShowActivity);
 	
+	g_Forward_ClientTime = CreateGlobalForward("Activity_OnFetchClientTime", ET_Event, Param_Cell, Param_Cell, Param_Cell);
+	
 	for (int i = 1; i <= MaxClients; i++)
 	{
 		OnClientConnected(i);
-		if (IsClientInGame(i)) OnClientPostAdminCheck(i);
+		if (IsClientInGame(i))
+		{
+			OnClientPostAdminCheck(i);
+		}
 	}
-	
-	g_Forward_ClientTime = CreateGlobalForward("Activity_OnFetchClientTime", ET_Event, Param_Cell, Param_Cell, Param_Cell);
 }
 
 public void Database_OnConnect(Database db, const char[] error, any data)
@@ -61,7 +64,7 @@ public void Database_OnConnect(Database db, const char[] error, any data)
 	
 	if (!StrEqual(buffer, "mysql", false))
 	{
-		LogError("Could not connect to the database: expected mysql database.");
+		LogError("Could not connect to the database: expected mysql database");
 		SetFailState("Could not connect to the database.");
 	}
 	
@@ -104,30 +107,30 @@ public void OnClientPostAdminCheck(int client)
 
 public void Database_GetClientTime(Database db, DBResultSet rs, const char[] error, any data)
 {
-	if (!rs) {
+	if (!rs)
+	{
 		LogError("Failed to query database: %s", error);
 		return;
 	}
 	
 	int client = GetClientOfUserId(view_as<int>(data));
 	
-	if (!client) {	
-		return;
-	}
-	
-	if (rs.FetchRow())
+	if (client)
 	{
-		g_RecentTime[client] = rs.FetchInt(0);
-		g_TotalTime[client] = rs.FetchInt(1);
+		if (rs.FetchRow())
+		{
+			g_RecentTime[client] = rs.FetchInt(0);
+			g_TotalTime[client] = rs.FetchInt(1);
+		}
+		
+		g_HasTimeFetched[client] = true;
+		
+		Call_StartForward(g_Forward_ClientTime);
+		Call_PushCell(client);
+		Call_PushCell(g_RecentTime[client]);
+		Call_PushCell(g_TotalTime[client]);
+		Call_Finish();
 	}
-	
-	g_HasTimeFetched[client] = true;
-	
-	Call_StartForward(g_Forward_ClientTime);
-	Call_PushCell(client);
-	Call_PushCell(g_RecentTime[client]);
-	Call_PushCell(g_TotalTime[client]);
-	Call_Finish();
 }
 
 public void OnClientDisconnect(int client)
@@ -181,11 +184,15 @@ public Action Command_ShowActivity(int client, int args)
 	return Plugin_Handled;
 }
 
-public int Panel_DoNothing(Menu menu, MenuAction action, int param1, int param2) {}
+public int Panel_DoNothing(Menu menu, MenuAction action, int param1, int param2)
+{
+	/* Do nothing */
+}
 
 public void Database_FastQuery(Database db, DBResultSet rs, const char[] error, any data)
 {
-	if (!rs) {	
+	if (!rs)
+	{	
 		LogError("Failed to query database: %s", error);
 	}
 }
@@ -194,7 +201,8 @@ int GetClientMapTime(int client)
 {
 	float clientTime = GetClientTime(client), gameTime = GetGameTime();
 	
-	if (clientTime > gameTime) {
+	if (clientTime > gameTime)
+	{
 		return RoundToZero(gameTime);
 	}
 	
@@ -206,11 +214,13 @@ public int Native_GetClientRecentTime(Handle hPlugin, int numParams)
 {
 	int client = GetNativeCell(1);
 	
-	if (client < 1 || client > MaxClients) {
+	if (client < 1 || client > MaxClients)
+	{
 		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid client index %d", client);
 	}
 	
-	if (!IsClientInGame(client)) {
+	if (!IsClientInGame(client))
+	{
 		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not in game", client);
 	}
 	
@@ -223,11 +233,13 @@ public int Native_GetClientTotalTime(Handle hPlugin, int numParams)
 {
 	int client = GetNativeCell(1);
 	
-	if (client < 1 || client > MaxClients) {
+	if (client < 1 || client > MaxClients)
+	{
 		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid client index %d", client);
 	}
 	
-	if (!IsClientInGame(client)) {
+	if (!IsClientInGame(client))
+	{
 		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not in game", client);
 	}
 
