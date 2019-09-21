@@ -19,6 +19,18 @@
 	
 	"Activity Unavailable"
 	{
-		"en"			"Your activity is unavailable due to a database query error."
+		"en"			"Your activity is unavailable due to a database query error"
+	}
+	
+	"Activity Of"
+	{
+		"#format"		"{1:s},{2:0.1f},{3:d}"
+		"en"			"Activity of {1} : {2} hours in the past two weeks - {3} hours on record"
+	}
+	
+	"Activity Of Unavailable"
+	{
+		"#format"		"{1:s}"
+		"en"			"Activity of {1} : unavailable due to a database query error"
 	}
 }
