@@ -2,6 +2,7 @@
 #pragma newdecls required
 
 #include <sourcemod>
+#include <regex>
 
 public Plugin myinfo =
 {
@@ -36,9 +37,9 @@ public void OnPluginStart()
 	
 	Database.Connect(Database_OnConnect, "playeractivity");
 	g_Forward_ClientTime = CreateGlobalForward("Activity_OnFetchClientTime", ET_Event, Param_Cell, Param_Cell, Param_Cell);
-
-	RegConsoleCmd("sm_activity", Command_ShowActivity);
-	RegConsoleCmd("sm_time", Command_ShowActivity);
+	
+	RegConsoleCmd("sm_activity", Command_Activity);
+	RegAdminCmd("sm_activityof", Command_ActivityOf, ADMFLAG_RCON);
 
 	for (int i = 1; i <= MaxClients; i++)
 	{
@@ -73,7 +74,7 @@ public void Database_OnConnect(Database db, const char[] error, any data)
 
 public void OnMapEnd()
 {
-	/* Merge players data older than 2 weeks */
+	/* Merge players data older than two weeks */
 	Transaction data = new Transaction();
 	
 	data.AddQuery("CREATE TEMPORARY TABLE players_activity_temp SELECT steamid, min(date), sum(seconds) FROM players_activity WHERE date < CURRENT_DATE - INTERVAL 2 WEEK GROUP BY steamid;");
@@ -100,11 +101,11 @@ public void OnClientPostAdminCheck(int client)
 	{
 		char query[256];
 		Format(query, sizeof(query), "SELECT sum(CASE WHEN date >= CURRENT_DATE - INTERVAL 2 WEEK THEN seconds END), sum(seconds) FROM players_activity WHERE steamid = %d;", steamId);  
-		g_Database.Query(Database_GetClientTime, query, GetClientUserId(client));
+		g_Database.Query(Database_GetClientActivity, query, GetClientUserId(client));
 	}
 }
 
-public void Database_GetClientTime(Database db, DBResultSet rs, const char[] error, any data)
+public void Database_GetClientActivity(Database db, DBResultSet rs, const char[] error, any data)
 {
 	if (!rs)
 	{
@@ -144,7 +145,7 @@ public void OnClientDisconnect(int client)
 	}
 }
 
-public Action Command_ShowActivity(int client, int args)
+public Action Command_Activity(int client, int args)
 {
 	if (!client)
 	{
@@ -160,8 +161,8 @@ public Action Command_ShowActivity(int client, int args)
 	
 	SetGlobalTransTarget(client);
 	
-	char buffer[128];
 	Panel panel = new Panel();
+	char buffer[128];
 	int mapTime = GetClientMapTime(client);
 
 	Format(buffer, sizeof(buffer), "%t", "Activity Title");
@@ -176,16 +177,94 @@ public Action Command_ShowActivity(int client, int args)
 	panel.DrawItem("", ITEMDRAW_SPACER);
 	panel.CurrentKey = GetMaxPageItems(panel.Style);
 	panel.DrawItem("Exit", ITEMDRAW_CONTROL);
-
 	panel.Send(client, Panel_DoNothing, MENU_TIME_FOREVER);
-	delete panel;
 	
+	delete panel;
 	return Plugin_Handled;
 }
 
 public int Panel_DoNothing(Menu menu, MenuAction action, int param1, int param2)
 {
 	/* Do nothing */
+}
+
+public Action Command_ActivityOf(int client, int args)
+{
+	if (args < 1)
+	{
+		ReplyToCommand(client, "[SM] Usage: sm_activityof <steamid>");
+		return Plugin_Handled;
+	}
+	
+	char arg[64];
+	GetCmdArgString(arg, sizeof(arg));
+	ReplaceString(arg, sizeof(arg), "\"", "");		
+	
+	int steamId = ConvertSteamIdIntoAccountId(arg);
+	if (!steamId)
+	{
+		ReplyToCommand(client, "[SM] %t", "Invalid SteamID specified");		
+		return Plugin_Handled;
+	}
+	
+	DataPack pk = new DataPack();
+	pk.WriteCell(client ? GetClientUserId(client) : 0);
+	pk.WriteCell(GetCmdReplySource());
+	pk.WriteString(arg);
+
+	char query[256];
+	Format(query, sizeof(query), "SELECT sum(CASE WHEN date >= CURRENT_DATE - INTERVAL 2 WEEK THEN seconds END), sum(seconds) FROM players_activity WHERE steamid = %d;", steamId);  
+	g_Database.Query(Database_GetActivityOf, query, pk);
+	
+	return Plugin_Handled;
+}
+
+public void Database_GetActivityOf(Database db, DBResultSet rs, const char[] error, any data)
+{
+	DataPack pk = view_as<DataPack>(data);
+	pk.Reset();
+
+	int userId = pk.ReadCell();
+	ReplySource commandSource = pk.ReadCell();
+
+	char steamId[64];
+	pk.ReadString(steamId, sizeof(steamId));
+	
+	delete pk;
+	
+	int client = userId ? GetClientOfUserId(userId) : 0;
+	bool validClient = !userId || client;
+	
+	if (!rs)
+	{
+		if (validClient)
+		{
+			ReplySource currentSource = SetCmdReplySource(commandSource);			
+			ReplyToCommand(client, "[SM] %t", "Activity Of Unavailable", steamId);
+			SetCmdReplySource(currentSource);
+		}
+		
+		LogError("Failed to query database: %s", error);
+		return;
+	}
+	
+	if (!validClient)
+	{
+		/* Client no longer available */
+		return;
+	}
+	
+	int recentTime, totalTime;		
+
+	if (rs.FetchRow())
+	{
+		recentTime = rs.FetchInt(0);
+		totalTime = rs.FetchInt(1);
+	}
+	
+	ReplySource currentSource = SetCmdReplySource(commandSource);	
+	ReplyToCommand(client, "[SM] %t", "Activity Of", steamId, float(recentTime) / 3600, totalTime / 3600);
+	SetCmdReplySource(currentSource);
 }
 
 public void Database_FastQuery(Database db, DBResultSet rs, const char[] error, any data)
@@ -206,6 +285,21 @@ int GetClientMapTime(int client)
 	}
 	
 	return RoundToZero(clientTime);
+}
+
+int ConvertSteamIdIntoAccountId(const char[] steamId)
+{
+	/* Steam Id validation */
+	Regex exp = new Regex("^STEAM_[0-5]:[0-1]:[0-9]+$");
+	int matches = exp.Match(steamId);
+	delete exp;
+	
+	if (matches != 1)
+	{
+		return 0;
+	}
+	
+	return StringToInt(steamId[10]) * 2 + steamId[8] - 48;
 }
 
 /* Native handler for bool Activity_GetClientRecentTime(int client, int &recentTime) */
