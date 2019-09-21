@@ -20,8 +20,8 @@ https://forums.alliedmods.net/showthread.php?p=2625964
 
 # Commands
 ```
-sm_activity - will show the player's activity on the server
-sm_time - same as sm_activity
+sm_activity - show the player's activity on the server
+sm_activityof <steamid> - show this steamid's activity on the server
 ```
 
 # Example of output
