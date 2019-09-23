@@ -289,7 +289,6 @@ int GetClientMapTime(int client)
 
 int ConvertSteamIdIntoAccountId(const char[] steamId)
 {
-	/* Steam Id validation */
 	Regex exp = new Regex("^STEAM_[0-1]:[0-1]:[0-9]+$");
 	int matches = exp.Match(steamId);
 	delete exp;
