@@ -17,7 +17,6 @@ Database g_Database;
 Handle g_Forward_ClientTime;
 
 bool g_HasTimeFetched[MAXPLAYERS + 1];
-
 int g_RecentTime[MAXPLAYERS + 1];
 int g_TotalTime[MAXPLAYERS + 1];
 
@@ -87,8 +86,7 @@ public void OnMapEnd()
 
 public void OnClientConnected(int client)
 {
-	g_HasTimeFetched[client] = false;
-	
+	g_HasTimeFetched[client] = false;	
 	g_RecentTime[client] = 0;
 	g_TotalTime[client] = 0;
 }
@@ -98,7 +96,7 @@ public void OnClientPostAdminCheck(int client)
 	int steamId = GetSteamAccountID(client);
 	
 	if (steamId)
-	{
+	{	
 		char query[256];
 		Format(query, sizeof(query), "SELECT sum(CASE WHEN date >= CURRENT_DATE - INTERVAL 2 WEEK THEN seconds END), sum(seconds) FROM players_activity WHERE steamid = %d;", steamId);  
 		g_Database.Query(Database_GetClientActivity, query, GetClientUserId(client));
@@ -153,6 +151,12 @@ public Action Command_Activity(int client, int args)
 		return Plugin_Handled;
 	}
 	
+	if (!IsClientAuthorized(client))
+	{
+		ReplyToCommand(client, "[SM] %t", "Activity Steam Unavailable");
+		return Plugin_Handled;
+	}
+	
 	if (!g_HasTimeFetched[client])
 	{
 		ReplyToCommand(client, "[SM] %t", "Activity Unavailable");
@@ -199,8 +203,8 @@ public Action Command_ActivityOf(int client, int args)
 	char arg[64];
 	GetCmdArgString(arg, sizeof(arg));
 	ReplaceString(arg, sizeof(arg), "\"", "");		
-	
 	int steamId = ConvertSteamIdIntoAccountId(arg);
+	
 	if (!steamId)
 	{
 		ReplyToCommand(client, "[SM] %t", "Invalid SteamID specified");		
@@ -226,14 +230,13 @@ public void Database_GetActivityOf(Database db, DBResultSet rs, const char[] err
 
 	int userId = pk.ReadCell();
 	ReplySource commandSource = pk.ReadCell();
-
 	char steamId[64];
 	pk.ReadString(steamId, sizeof(steamId));
 	
 	delete pk;
 	
 	int client = userId ? GetClientOfUserId(userId) : 0;
-	bool validClient = !userId || client;
+	bool validClient = !userId || client; // the client is the server or a connected player
 	
 	if (!rs)
 	{
