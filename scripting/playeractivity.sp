@@ -6,11 +6,11 @@
 
 public Plugin myinfo =
 {
-    name = "Player Activity",
-    author = "Ilusion9",
-    description = "Informations of players activity",
-    version = "2.5",
-    url = "https://github.com/Ilusion9/"
+	name = "Player Activity",
+	author = "Ilusion9",
+	description = "Informations of players activity",
+	version = "2.5",
+	url = "https://github.com/Ilusion9/"
 };
 
 Database g_Database;
