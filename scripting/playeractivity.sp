@@ -1,15 +1,16 @@
+#pragma semicolon 1
+#pragma newdecls required
+
 #include <sourcemod>
 #include <regex>
 
-#pragma newdecls required
-
 public Plugin myinfo =
 {
-	name = "Player Activity",
-	author = "Ilusion9",
-	description = "Informations of players activity",
-	version = "2.5",
-	url = "https://github.com/Ilusion9/"
+    name = "Player Activity",
+    author = "Ilusion9",
+    description = "Informations of players activity",
+    version = "2.5",
+    url = "https://github.com/Ilusion9/"
 };
 
 Database g_Database;
@@ -92,6 +93,7 @@ public void OnClientConnected(int client)
 
 public void OnClientPostAdminCheck(int client)
 {
+	/* Get client's time from database */
 	int steamId = GetSteamAccountID(client);
 	
 	if (steamId)
@@ -132,6 +134,7 @@ public void Database_GetClientActivity(Database db, DBResultSet rs, const char[]
 
 public void OnClientDisconnect(int client)
 {
+	/* Save client's time from current map */
 	int steamId = GetSteamAccountID(client);
 	
 	if (steamId)
@@ -161,20 +164,18 @@ public Action Command_Activity(int client, int args)
 		ReplyToCommand(client, "[SM] %t", "Activity Unavailable");
 		return Plugin_Handled;
 	}
-	
-	SetGlobalTransTarget(client);
-	
+		
 	Panel panel = new Panel();
 	char buffer[128];
 	int mapTime = GetClientMapTime(client);
 
-	Format(buffer, sizeof(buffer), "%t", "Activity Title");
+	Format(buffer, sizeof(buffer), "%T", "Activity Title", client);
 	panel.SetTitle(buffer);
 
-	Format(buffer, sizeof(buffer), "%t", "Activity Recent", float(g_RecentTime[client] + mapTime) / 3600);
+	Format(buffer, sizeof(buffer), "%T", "Activity Recent", client, float(g_RecentTime[client] + mapTime) / 3600);
 	panel.DrawText(buffer);
 	
-	Format(buffer, sizeof(buffer), "%t", "Activity Total", (g_TotalTime[client] + mapTime) / 3600);
+	Format(buffer, sizeof(buffer), "%T", "Activity Total", client, (g_TotalTime[client] + mapTime) / 3600);
 	panel.DrawText(buffer);
 	
 	panel.DrawItem("", ITEMDRAW_SPACER);
@@ -214,7 +215,7 @@ public Action Command_ActivityOf(int client, int args)
 	pk.WriteCell(client ? GetClientUserId(client) : 0);
 	pk.WriteCell(GetCmdReplySource());
 	pk.WriteString(arg);
-
+	
 	char query[256];
 	Format(query, sizeof(query), "SELECT sum(CASE WHEN date >= CURRENT_DATE - INTERVAL 2 WEEK THEN seconds END), sum(seconds) FROM players_activity WHERE steamid = %d;", steamId);  
 	g_Database.Query(Database_GetActivityOf, query, pk);
@@ -226,7 +227,7 @@ public void Database_GetActivityOf(Database db, DBResultSet rs, const char[] err
 {
 	DataPack pk = view_as<DataPack>(data);
 	pk.Reset();
-
+	
 	int userId = pk.ReadCell();
 	ReplySource commandSource = pk.ReadCell();
 	char steamId[64];
@@ -257,7 +258,7 @@ public void Database_GetActivityOf(Database db, DBResultSet rs, const char[] err
 	}
 	
 	int recentTime, totalTime;		
-
+	
 	if (rs.FetchRow())
 	{
 		recentTime = rs.FetchInt(0);
@@ -336,7 +337,7 @@ public int Native_GetClientTotalTime(Handle hPlugin, int numParams)
 	{
 		return ThrowNativeError(SP_ERROR_NATIVE, "Client %d is not in game", client);
 	}
-
+	
 	SetNativeCellRef(2, g_TotalTime[client] + GetClientMapTime(client));
 	return g_HasTimeFetched[client];
 }
