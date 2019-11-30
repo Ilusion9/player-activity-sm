@@ -31,6 +31,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char [] error, int err_ma
 
 public void OnPluginStart()
 {
+	LoadTranslations("core.phrases");
 	LoadTranslations("common.phrases");
 	LoadTranslations("playeractivity.phrases");
 	
@@ -93,7 +94,6 @@ public void OnClientConnected(int client)
 
 public void OnClientPostAdminCheck(int client)
 {
-	/* Get client's time from database */
 	int steamId = GetSteamAccountID(client);
 	
 	if (steamId)
@@ -134,7 +134,6 @@ public void Database_GetClientActivity(Database db, DBResultSet rs, const char[]
 
 public void OnClientDisconnect(int client)
 {
-	/* Save client's time from current map */
 	int steamId = GetSteamAccountID(client);
 	
 	if (steamId)
@@ -164,14 +163,14 @@ public Action Command_Activity(int client, int args)
 		ReplyToCommand(client, "[SM] %t", "Activity Unavailable");
 		return Plugin_Handled;
 	}
-		
+	
 	Panel panel = new Panel();
 	char buffer[128];
 	int mapTime = GetClientMapTime(client);
-
+	
 	Format(buffer, sizeof(buffer), "%T", "Activity Title", client);
 	panel.SetTitle(buffer);
-
+	
 	Format(buffer, sizeof(buffer), "%T", "Activity Recent", client, float(g_RecentTime[client] + mapTime) / 3600);
 	panel.DrawText(buffer);
 	
@@ -180,10 +179,13 @@ public Action Command_Activity(int client, int args)
 	
 	panel.DrawItem("", ITEMDRAW_SPACER);
 	panel.CurrentKey = GetMaxPageItems(panel.Style);
-	panel.DrawItem("Exit", ITEMDRAW_CONTROL);
-	panel.Send(client, Panel_DoNothing, MENU_TIME_FOREVER);
 	
+	Format(buffer, sizeof(buffer), "%T", "Exit", client);
+	panel.DrawItem(buffer, ITEMDRAW_CONTROL);
+	
+	panel.Send(client, Panel_DoNothing, MENU_TIME_FOREVER);
 	delete panel;
+	
 	return Plugin_Handled;
 }
 
@@ -236,7 +238,7 @@ public void Database_GetActivityOf(Database db, DBResultSet rs, const char[] err
 	delete pk;
 	
 	int client = userId ? GetClientOfUserId(userId) : 0;
-	bool validClient = !userId || client; // the client is the server or a connected player
+	bool validClient = !userId || client;
 	
 	if (!rs)
 	{
@@ -253,7 +255,6 @@ public void Database_GetActivityOf(Database db, DBResultSet rs, const char[] err
 	
 	if (!validClient)
 	{
-		/* Client no longer available */
 		return;
 	}
 	
