@@ -99,7 +99,7 @@ public void OnClientPostAdminCheck(int client)
 	if (steamId)
 	{	
 		char query[256];
-		Format(query, sizeof(query), "SELECT sum(CASE WHEN date >= CURRENT_DATE - INTERVAL 2 WEEK THEN seconds END), sum(seconds) FROM players_activity WHERE steamid = %d;", steamId);  
+		Format(query, sizeof(query), "SELECT sum(CASE WHEN date >= CURRENT_DATE - INTERVAL 2 WEEK THEN seconds END) as recentTime, sum(seconds) as totalTime FROM players_activity WHERE steamid = %d;", steamId);  
 		g_Database.Query(Database_GetClientActivity, query, GetClientUserId(client));
 	}
 }
@@ -219,7 +219,7 @@ public Action Command_ActivityOf(int client, int args)
 	pk.WriteString(arg);
 	
 	char query[256];
-	Format(query, sizeof(query), "SELECT sum(CASE WHEN date >= CURRENT_DATE - INTERVAL 2 WEEK THEN seconds END), sum(seconds) FROM players_activity WHERE steamid = %d;", steamId);  
+	Format(query, sizeof(query), "SELECT sum(CASE WHEN date >= CURRENT_DATE - INTERVAL 2 WEEK THEN seconds END) as recentTime, sum(seconds) as totalTime FROM players_activity WHERE steamid = %d;", steamId);  
 	g_Database.Query(Database_GetActivityOf, query, pk);
 	
 	return Plugin_Handled;
@@ -255,8 +255,8 @@ public void Database_GetActivityOf(Database db, DBResultSet rs, const char[] err
 	{
 		return;
 	}
-		
-	if (!rs.FetchRow())
+	
+	if (!rs.FetchRow() || rs.IsFieldNull(1))
 	{
 		ReplyToCommandSource(client, commandSource, "[SM] %t", "Activity Of Not Found", steamId);
 		return;
