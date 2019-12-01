@@ -36,12 +36,12 @@
 	"Activity Of Database Unavailable"
 	{
 		"#format"		"{1:s}"
-		"en"			"Activity of {1} : unavailable due to a database query error"
+		"en"			"Activity of {1} : unavailable due to a database query error."
 	}
 	
 	"Activity Of Not Found"
 	{
 		"#format"		"{1:s}"
-		"en"			"Activity of {1} : cannot find this steamid in the database"
+		"en"			"Activity of {1} : user not found in the database."
 	}
 }
