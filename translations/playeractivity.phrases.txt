@@ -24,7 +24,7 @@
 	
 	"Activity Steam Unavailable"
 	{
-		"en"			"Your activity is unavailable due to a steam error."
+		"en"			"Your activity is unavailable due to a steam query error."
 	}
 	
 	"Activity Of"
