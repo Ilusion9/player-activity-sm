@@ -160,7 +160,7 @@ public Action Command_Activity(int client, int args)
 	
 	if (!g_HasTimeFetched[client])
 	{
-		ReplyToCommand(client, "[SM] %t", "Activity Unavailable");
+		ReplyToCommand(client, "[SM] %t", "Activity Database Unavailable");
 		return Plugin_Handled;
 	}
 	
@@ -244,7 +244,7 @@ public void Database_GetActivityOf(Database db, DBResultSet rs, const char[] err
 	{
 		if (validClient)
 		{
-			ReplyToCommandSource(client, commandSource, "[SM] %t", "Activity Of Unavailable", steamId);
+			ReplyToCommandSource(client, commandSource, "[SM] %t", "Activity Of Database Unavailable", steamId);
 		}
 		
 		LogError("Failed to query database: %s", error);
