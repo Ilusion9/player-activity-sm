@@ -244,9 +244,7 @@ public void Database_GetActivityOf(Database db, DBResultSet rs, const char[] err
 	{
 		if (validClient)
 		{
-			ReplySource currentSource = SetCmdReplySource(commandSource);			
-			ReplyToCommand(client, "[SM] %t", "Activity Of Unavailable", steamId);
-			SetCmdReplySource(currentSource);
+			ReplyToCommandSource(client, commandSource, "[SM] %t", "Activity Of Unavailable", steamId);
 		}
 		
 		LogError("Failed to query database: %s", error);
@@ -257,18 +255,15 @@ public void Database_GetActivityOf(Database db, DBResultSet rs, const char[] err
 	{
 		return;
 	}
-	
-	int recentTime, totalTime;		
-	
-	if (rs.FetchRow())
+		
+	if (!rs.FetchRow())
 	{
-		recentTime = rs.FetchInt(0);
-		totalTime = rs.FetchInt(1);
+		ReplyToCommandSource(client, commandSource, "[SM] %t", "Activity Of Not Found", steamId);
+		return;
 	}
 	
-	ReplySource currentSource = SetCmdReplySource(commandSource);	
-	ReplyToCommand(client, "[SM] %t", "Activity Of", steamId, float(recentTime) / 3600, totalTime / 3600);
-	SetCmdReplySource(currentSource);
+	int recentTime = rs.FetchInt(0), totalTime = rs.FetchInt(1);
+	ReplyToCommandSource(client, commandSource, "[SM] %t", "Activity Of", steamId, float(recentTime) / 3600, totalTime / 3600);
 }
 
 public void Database_FastQuery(Database db, DBResultSet rs, const char[] error, any data)
@@ -293,7 +288,7 @@ int GetClientMapTime(int client)
 
 int ConvertSteamIdIntoAccountId(const char[] steamId)
 {
-	Regex exp = new Regex("^STEAM_[0-1]:[0-1]:[0-9]+$");
+	Regex exp = new Regex("^STEAM_[0-5]:[0-1]:[0-9]+$");
 	int matches = exp.Match(steamId);
 	delete exp;
 	
@@ -341,4 +336,15 @@ public int Native_GetClientTotalTime(Handle hPlugin, int numParams)
 	
 	SetNativeCellRef(2, g_TotalTime[client] + GetClientMapTime(client));
 	return g_HasTimeFetched[client];
+}
+
+void ReplyToCommandSource(int client, ReplySource commandSource, const char[] format, any ...)
+{
+	char buffer[254];
+	SetGlobalTransTarget(client);
+	VFormat(buffer, sizeof(buffer), format, 4);
+	
+	ReplySource currentSource = SetCmdReplySource(commandSource);
+	ReplyToCommand(client, buffer);
+	SetCmdReplySource(currentSource);
 }
