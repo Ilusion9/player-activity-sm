@@ -152,15 +152,9 @@ public Action Command_Activity(int client, int args)
 		return Plugin_Handled;
 	}
 	
-	if (!IsClientAuthorized(client))
-	{
-		ReplyToCommand(client, "[SM] %t", "Activity Steam Unavailable");
-		return Plugin_Handled;
-	}
-	
 	if (!g_HasTimeFetched[client])
 	{
-		ReplyToCommand(client, "[SM] %t", "Activity Database Unavailable");
+		ReplyToCommand(client, "[SM] %t", "Activity Unavailable");
 		return Plugin_Handled;
 	}
 	
@@ -244,7 +238,7 @@ public void Database_GetActivityOf(Database db, DBResultSet rs, const char[] err
 	{
 		if (validClient)
 		{
-			ReplyToCommandSource(client, commandSource, "[SM] %t", "Activity Of Database Unavailable", steamId);
+			ReplyToCommandSource(client, commandSource, "[SM] %t", "Activity Of Unavailable", steamId);
 		}
 		
 		LogError("Failed to query database: %s", error);
@@ -256,13 +250,13 @@ public void Database_GetActivityOf(Database db, DBResultSet rs, const char[] err
 		return;
 	}
 	
-	if (!rs.FetchRow() || rs.IsFieldNull(1))
+	int recentTime, totalTime;
+	if (rs.FetchRow())
 	{
-		ReplyToCommandSource(client, commandSource, "[SM] %t", "Activity Of Not Found", steamId);
-		return;
+		recentTime = rs.FetchInt(0);
+		totalTime = rs.FetchInt(1);
 	}
 	
-	int recentTime = rs.FetchInt(0), totalTime = rs.FetchInt(1);
 	ReplyToCommandSource(client, commandSource, "[SM] %t", "Activity Of", steamId, float(recentTime) / 3600, totalTime / 3600);
 }
 
