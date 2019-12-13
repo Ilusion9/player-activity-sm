@@ -19,7 +19,7 @@
 	
 	"Activity Unavailable"
 	{
-		"en"			"Your activity is unavailable due to an error."
+		"en"			"Your activity is unavailable due to an error. Please try later."
 	}
 	
 	"Activity Of"
@@ -31,6 +31,6 @@
 	"Activity Of Unavailable"
 	{
 		"#format"		"{1:s}"
-		"en"			"{1} : activity unavailable due to an error."
+		"en"			"{1} : activity unavailable due to an error. Please try later."
 	}
 }
