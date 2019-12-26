@@ -34,23 +34,16 @@ public void OnPluginStart()
 	LoadTranslations("common.phrases");
 	LoadTranslations("playeractivity.phrases");
 	
+	Database.Connect(Database_OnConnect, "playeractivity");
 	g_Forward_ClientTime = CreateGlobalForward("Activity_OnFetchClientTime", ET_Event, Param_Cell, Param_Cell, Param_Cell);
 	
-	RegConsoleCmd("sm_activity", Command_Activity);
-	RegAdminCmd("sm_activityof", Command_ActivityOf, ADMFLAG_RCON);
-}
-
-public void OnMapStart()
-{
-	if (!g_Database)
-	{
-		Database.Connect(Database_OnConnect, "playeractivity");
-	}
+	RegConsoleCmd("sm_time", Command_Time);
+	RegAdminCmd("sm_timeof", Command_TimeOf, ADMFLAG_RCON);
 }
 
 public void Database_OnConnect(Database db, const char[] error, any data)
 {
-	if (!db)
+	if (db == null)
 	{
 		LogError("Could not connect to the database: %s", error);
 		return;
@@ -72,7 +65,6 @@ public void Database_OnConnect(Database db, const char[] error, any data)
 	{
 		if (IsClientInGame(i))
 		{
-			OnClientConnected(i);
 			OnClientPostAdminCheck(i);
 		}
 	}
@@ -100,13 +92,13 @@ public void OnClientConnected(int client)
 
 public void OnClientPostAdminCheck(int client)
 {
-	if (!g_Database)
+	if (g_Database == null)
 	{
 		return;
 	}
 	
 	int steamId = GetSteamAccountID(client);
-	if (!steamId)
+	if (steamId == 0)
 	{	
 		return;
 	}
@@ -118,14 +110,14 @@ public void OnClientPostAdminCheck(int client)
 
 public void Database_GetClientActivity(Database db, DBResultSet rs, const char[] error, any data)
 {
-	if (!rs)
+	if (rs == null)
 	{
 		LogError("Failed to query database: %s", error);
 		return;
 	}
 	
 	int client = GetClientOfUserId(view_as<int>(data));
-	if (!client)
+	if (client == 0)
 	{
 		return;
 	}
@@ -147,13 +139,13 @@ public void Database_GetClientActivity(Database db, DBResultSet rs, const char[]
 
 public void OnClientDisconnect(int client)
 {
-	if (!g_Database)
+	if (g_Database == null)
 	{
 		return;
 	}
 	
 	int steamId = GetSteamAccountID(client);
-	if (!steamId)
+	if (steamId == 0)
 	{	
 		return;
 	}
@@ -163,9 +155,9 @@ public void OnClientDisconnect(int client)
 	g_Database.Query(Database_FastQuery, query);
 }
 
-public Action Command_Activity(int client, int args)
+public Action Command_Time(int client, int args)
 {
-	if (!client)
+	if (client == 0)
 	{
 		ReplyToCommand(client, "[SM] %t", "Command is in-game only");
 		return Plugin_Handled;
@@ -207,11 +199,11 @@ public int Panel_DoNothing(Menu menu, MenuAction action, int param1, int param2)
 	/* Do nothing */
 }
 
-public Action Command_ActivityOf(int client, int args)
+public Action Command_TimeOf(int client, int args)
 {
 	if (args < 1)
 	{
-		ReplyToCommand(client, "[SM] Usage: sm_activityof <steamid>");
+		ReplyToCommand(client, "[SM] Usage: sm_timeof <steamid>");
 		return Plugin_Handled;
 	}
 	
@@ -220,13 +212,13 @@ public Action Command_ActivityOf(int client, int args)
 	ReplaceString(arg, sizeof(arg), "\"", "");		
 	
 	int steamId = ConvertSteamIdIntoAccountId(arg);
-	if (!steamId)
+	if (steamId == 0)
 	{
 		ReplyToCommand(client, "[SM] %t", "Invalid SteamID specified");		
 		return Plugin_Handled;
 	}
 	
-	if (!g_Database)
+	if (g_Database == null)
 	{
 		ReplyToCommand(client, "[SM] %t", "Activity Of Unavailable", steamId);
 		return Plugin_Handled;
@@ -259,7 +251,7 @@ public void Database_GetActivityOf(Database db, DBResultSet rs, const char[] err
 	int client = userId ? GetClientOfUserId(userId) : 0;
 	bool validClient = !userId || client;
 	
-	if (!rs)
+	if (rs == null)
 	{
 		if (validClient)
 		{
@@ -287,7 +279,7 @@ public void Database_GetActivityOf(Database db, DBResultSet rs, const char[] err
 
 public void Database_FastQuery(Database db, DBResultSet rs, const char[] error, any data)
 {
-	if (!rs)
+	if (rs == null)
 	{	
 		LogError("Failed to query database: %s", error);
 	}
