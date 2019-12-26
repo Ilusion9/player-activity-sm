@@ -37,8 +37,8 @@ public void OnPluginStart()
 	Database.Connect(Database_OnConnect, "playeractivity");
 	g_Forward_ClientTime = CreateGlobalForward("Activity_OnFetchClientTime", ET_Event, Param_Cell, Param_Cell, Param_Cell);
 	
-	RegConsoleCmd("sm_time", Command_Time);
-	RegAdminCmd("sm_timeof", Command_TimeOf, ADMFLAG_RCON);
+	RegConsoleCmd("sm_activity", Command_Activity);
+	RegAdminCmd("sm_activityof", Command_ActivityOf, ADMFLAG_RCON);
 }
 
 public void Database_OnConnect(Database db, const char[] error, any data)
@@ -155,7 +155,7 @@ public void OnClientDisconnect(int client)
 	g_Database.Query(Database_FastQuery, query);
 }
 
-public Action Command_Time(int client, int args)
+public Action Command_Activity(int client, int args)
 {
 	if (client == 0)
 	{
@@ -199,11 +199,11 @@ public int Panel_DoNothing(Menu menu, MenuAction action, int param1, int param2)
 	/* Do nothing */
 }
 
-public Action Command_TimeOf(int client, int args)
+public Action Command_ActivityOf(int client, int args)
 {
 	if (args < 1)
 	{
-		ReplyToCommand(client, "[SM] Usage: sm_timeof <steamid>");
+		ReplyToCommand(client, "[SM] Usage: sm_activityof <steamid>");
 		return Plugin_Handled;
 	}
 	
