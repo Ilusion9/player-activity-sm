@@ -72,11 +72,11 @@ public void Database_OnConnect(Database db, const char[] error, any data)
 
 public void OnMapEnd()
 {
-	/* Merge players data older than two weeks */
+	/* Merge players data older than one month */
 	Transaction data = new Transaction();
 	
-	data.AddQuery("CREATE TEMPORARY TABLE players_activity_temp SELECT steamid, min(date), sum(seconds) FROM players_activity WHERE date < CURRENT_DATE - INTERVAL 2 WEEK GROUP BY steamid;");
-	data.AddQuery("DELETE FROM players_activity WHERE date < CURRENT_DATE - INTERVAL 2 WEEK;");
+	data.AddQuery("CREATE TEMPORARY TABLE players_activity_temp SELECT steamid, min(date), sum(seconds) FROM players_activity WHERE date < CURRENT_DATE - INTERVAL 1 MONTH GROUP BY steamid;");
+	data.AddQuery("DELETE FROM players_activity WHERE date < CURRENT_DATE - INTERVAL 1 MONTH;");
 	data.AddQuery("INSERT INTO players_activity SELECT * FROM players_activity_temp;");
 	data.AddQuery("DROP TABLE players_activity_temp;");
 	
@@ -104,7 +104,7 @@ public void OnClientPostAdminCheck(int client)
 	}
 	
 	char query[256];
-	Format(query, sizeof(query), "SELECT sum(CASE WHEN date >= CURRENT_DATE - INTERVAL 2 WEEK THEN seconds END) as recentTime, sum(seconds) as totalTime FROM players_activity WHERE steamid = %d;", steamId);  
+	Format(query, sizeof(query), "SELECT sum(CASE WHEN date >= CURRENT_DATE - INTERVAL 1 MONTH THEN seconds END) as recentTime, sum(seconds) as totalTime FROM players_activity WHERE steamid = %d;", steamId);  
 	g_Database.Query(Database_GetClientActivity, query, GetClientUserId(client));
 }
 
@@ -230,7 +230,7 @@ public Action Command_ActivityOf(int client, int args)
 	pk.WriteString(arg);
 	
 	char query[256];
-	Format(query, sizeof(query), "SELECT sum(CASE WHEN date >= CURRENT_DATE - INTERVAL 2 WEEK THEN seconds END) as recentTime, sum(seconds) as totalTime FROM players_activity WHERE steamid = %d;", steamId);  
+	Format(query, sizeof(query), "SELECT sum(CASE WHEN date >= CURRENT_DATE - INTERVAL 1 MONTH THEN seconds END) as recentTime, sum(seconds) as totalTime FROM players_activity WHERE steamid = %d;", steamId);  
 	g_Database.Query(Database_GetActivityOf, query, pk);
 	
 	return Plugin_Handled;
