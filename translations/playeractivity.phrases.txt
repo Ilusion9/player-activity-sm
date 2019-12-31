@@ -8,7 +8,7 @@
 	"Activity Recent"
 	{
 		"#format"		"{1:0.1f}"
-		"en"			"{1} hours - past two weeks"
+		"en"			"{1} hours - past month"
 	}
 	
 	"Activity Total"
@@ -25,7 +25,7 @@
 	"Activity Of"
 	{
 		"#format"		"{1:s},{2:0.1f},{3:d}"
-		"en"			"{1} : {2} hours in the past two weeks - {3} hours on record"
+		"en"			"{1} : {2} hours in the past month - {3} hours on record"
 	}
 	
 	"Activity Of Unavailable"
