@@ -27,7 +27,7 @@ sm_activityof <steamid> - show this steamid's activity on the server
 # Example of output
 ```
 Activity
-22 hours - past two weeks
+22 hours - past month
 335 hours - total
 ```
 
