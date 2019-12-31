@@ -43,7 +43,7 @@ public void OnPluginStart()
 
 public void Database_OnConnect(Database db, const char[] error, any data)
 {
-	if (db == null)
+	if (!db)
 	{
 		LogError("Could not connect to the database: %s", error);
 		return;
@@ -92,13 +92,13 @@ public void OnClientConnected(int client)
 
 public void OnClientPostAdminCheck(int client)
 {
-	if (g_Database == null)
+	if (!g_Database)
 	{
 		return;
 	}
 	
 	int steamId = GetSteamAccountID(client);
-	if (steamId == 0)
+	if (!steamId)
 	{	
 		return;
 	}
@@ -110,14 +110,14 @@ public void OnClientPostAdminCheck(int client)
 
 public void Database_GetClientActivity(Database db, DBResultSet rs, const char[] error, any data)
 {
-	if (rs == null)
+	if (!rs)
 	{
 		LogError("Failed to query database: %s", error);
 		return;
 	}
 	
 	int client = GetClientOfUserId(view_as<int>(data));
-	if (client == 0)
+	if (!client)
 	{
 		return;
 	}
@@ -139,13 +139,13 @@ public void Database_GetClientActivity(Database db, DBResultSet rs, const char[]
 
 public void OnClientDisconnect(int client)
 {
-	if (g_Database == null)
+	if (!g_Database)
 	{
 		return;
 	}
 	
 	int steamId = GetSteamAccountID(client);
-	if (steamId == 0)
+	if (!steamId)
 	{	
 		return;
 	}
@@ -157,7 +157,7 @@ public void OnClientDisconnect(int client)
 
 public Action Command_Activity(int client, int args)
 {
-	if (client == 0)
+	if (!client)
 	{
 		ReplyToCommand(client, "[SM] %t", "Command is in-game only");
 		return Plugin_Handled;
@@ -212,13 +212,13 @@ public Action Command_ActivityOf(int client, int args)
 	ReplaceString(arg, sizeof(arg), "\"", "");		
 	
 	int steamId = ConvertSteamIdIntoAccountId(arg);
-	if (steamId == 0)
+	if (!steamId)
 	{
 		ReplyToCommand(client, "[SM] %t", "Invalid SteamID specified");		
 		return Plugin_Handled;
 	}
 	
-	if (g_Database == null)
+	if (!g_Database)
 	{
 		ReplyToCommand(client, "[SM] %t", "Activity Of Unavailable", steamId);
 		return Plugin_Handled;
@@ -251,7 +251,7 @@ public void Database_GetActivityOf(Database db, DBResultSet rs, const char[] err
 	int client = userId ? GetClientOfUserId(userId) : 0;
 	bool validClient = !userId || client;
 	
-	if (rs == null)
+	if (!rs)
 	{
 		if (validClient)
 		{
@@ -279,7 +279,7 @@ public void Database_GetActivityOf(Database db, DBResultSet rs, const char[] err
 
 public void Database_FastQuery(Database db, DBResultSet rs, const char[] error, any data)
 {
-	if (rs == null)
+	if (!rs)
 	{	
 		LogError("Failed to query database: %s", error);
 	}
