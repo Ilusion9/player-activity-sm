@@ -1,6 +1,5 @@
 #include <sourcemod>
 #include <regex>
-
 #pragma newdecls required
 
 public Plugin myinfo =
@@ -72,6 +71,11 @@ public void Database_OnConnect(Database db, const char[] error, any data)
 
 public void OnMapEnd()
 {
+	if (!g_Database)
+	{
+		return;
+	}
+	
 	/* Merge players data older than one month */
 	Transaction data = new Transaction();
 	
