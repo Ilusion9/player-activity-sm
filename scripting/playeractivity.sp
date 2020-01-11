@@ -33,11 +33,18 @@ public void OnPluginStart()
 	LoadTranslations("common.phrases");
 	LoadTranslations("playeractivity.phrases");
 	
-	Database.Connect(Database_OnConnect, "playeractivity");
 	g_Forward_ClientTime = CreateGlobalForward("Activity_OnFetchClientTime", ET_Event, Param_Cell, Param_Cell, Param_Cell);
 	
 	RegConsoleCmd("sm_activity", Command_Activity);
 	RegAdminCmd("sm_activityof", Command_ActivityOf, ADMFLAG_RCON);
+}
+
+public void OnMapStart()
+{
+	if (!g_Database)
+	{
+		Database.Connect(Database_OnConnect, "playeractivity");
+	}
 }
 
 public void Database_OnConnect(Database db, const char[] error, any data)
