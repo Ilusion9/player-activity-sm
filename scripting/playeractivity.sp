@@ -315,7 +315,7 @@ public void Database_ActivityPurge(Database db, DBResultSet rs, const char[] err
 	{
 		if (validClient)
 		{
-			ReplyToCommandSource(client, commandSource, "[SM] %t", "Activity Delete Unavailable");
+			ReplyToCommandSource(client, commandSource, "[SM] %t", "Activity Purge Unavailable");
 		}
 		
 		LogError("Failed to query database: %s", error);
@@ -327,7 +327,7 @@ public void Database_ActivityPurge(Database db, DBResultSet rs, const char[] err
 		return;
 	}
 	
-	ReplyToCommandSource(client, commandSource, "[SM] %t", "Activity Deleted");
+	ReplyToCommandSource(client, commandSource, "[SM] %t", "Activity Purged");
 }
 
 public void Database_FastQuery(Database db, DBResultSet rs, const char[] error, any data)
