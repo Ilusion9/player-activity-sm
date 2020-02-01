@@ -37,6 +37,7 @@ public void OnPluginStart()
 	
 	RegConsoleCmd("sm_activity", Command_Activity);
 	RegAdminCmd("sm_activityof", Command_ActivityOf, ADMFLAG_RCON);
+	RegAdminCmd("sm_activitypurge", Command_ActivityPurge, ADMFLAG_RCON);
 }
 
 public void OnMapStart()
@@ -288,6 +289,44 @@ public void Database_GetActivityOf(Database db, DBResultSet rs, const char[] err
 	ReplyToCommandSource(client, commandSource, "[SM] %t", "Activity Of", steamId, float(recentTime) / 3600, totalTime / 3600);
 }
 
+public Action Command_ActivityPurge(int client, int args)
+{
+	DataPack pk = new DataPack();
+	pk.WriteCell(client ? GetClientUserId(client) : 0);
+	pk.WriteCell(GetCmdReplySource());
+	
+	g_Database.Query(Database_ActivityPurge, "TRUNCATE players_activity;", pk);
+	return Plugin_Handled;
+}
+
+public void Database_ActivityPurge(Database db, DBResultSet rs, const char[] error, any data)
+{
+	DataPack pk = view_as<DataPack>(data);
+	pk.Reset();
+	
+	int client = GetClientOfUserId(pk.ReadCell());
+	ReplySource commandSource = pk.ReadCell();
+	delete pk;
+	
+	if (!rs)
+	{
+		if (client)
+		{
+			ReplyToCommandSource(client, commandSource, "[SM] %t", "Activity Purge Unavailable");
+		}
+		
+		LogError("Failed to query database: %s", error);
+		return;
+	}
+	
+	if (!client)
+	{
+		return;
+	}
+	
+	ReplyToCommandSource(client, commandSource, "[SM] %t", "Activity Purge");
+}
+
 public void Database_FastQuery(Database db, DBResultSet rs, const char[] error, any data)
 {
 	if (!rs)
@@ -318,7 +357,18 @@ int ConvertSteamIdIntoAccountId(const char[] steamId)
 		return 0;
 	}
 	
-	return StringToInt(steamId[10]) * 2 + steamId[8] - 48;
+	return StringToInt(steamId[10]) * 2 + (steamId[8] - 48);
+}
+
+void ReplyToCommandSource(int client, ReplySource commandSource, const char[] format, any ...)
+{
+	char buffer[254];
+	SetGlobalTransTarget(client);
+	VFormat(buffer, sizeof(buffer), format, 4);
+	
+	ReplySource currentSource = SetCmdReplySource(commandSource);
+	ReplyToCommand(client, buffer);
+	SetCmdReplySource(currentSource);
 }
 
 /* Native handler for bool Activity_GetClientRecentTime(int client, int &recentTime) */
@@ -355,15 +405,4 @@ public int Native_GetClientTotalTime(Handle hPlugin, int numParams)
 	
 	SetNativeCellRef(2, g_TotalTime[client] + GetClientMapTime(client));
 	return g_HasTimeFetched[client];
-}
-
-void ReplyToCommandSource(int client, ReplySource commandSource, const char[] format, any ...)
-{
-	char buffer[254];
-	SetGlobalTransTarget(client);
-	VFormat(buffer, sizeof(buffer), format, 4);
-	
-	ReplySource currentSource = SetCmdReplySource(commandSource);
-	ReplyToCommand(client, buffer);
-	SetCmdReplySource(currentSource);
 }
