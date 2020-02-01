@@ -304,27 +304,30 @@ public void Database_ActivityPurge(Database db, DBResultSet rs, const char[] err
 	DataPack pk = view_as<DataPack>(data);
 	pk.Reset();
 	
-	int client = GetClientOfUserId(pk.ReadCell());
+	int client = pk.ReadCell();
 	ReplySource commandSource = pk.ReadCell();
 	delete pk;
 	
+	int client = userId ? GetClientOfUserId(userId) : 0;
+	bool validClient = !userId || client;
+	
 	if (!rs)
 	{
-		if (client)
+		if (validClient)
 		{
-			ReplyToCommandSource(client, commandSource, "[SM] %t", "Activity Purge Unavailable");
+			ReplyToCommandSource(client, commandSource, "[SM] %t", "Activity Delete Unavailable");
 		}
 		
 		LogError("Failed to query database: %s", error);
 		return;
 	}
 	
-	if (!client)
+	if (!validClient)
 	{
 		return;
 	}
 	
-	ReplyToCommandSource(client, commandSource, "[SM] %t", "Activity Purge");
+	ReplyToCommandSource(client, commandSource, "[SM] %t", "Activity Deleted");
 }
 
 public void Database_FastQuery(Database db, DBResultSet rs, const char[] error, any data)
