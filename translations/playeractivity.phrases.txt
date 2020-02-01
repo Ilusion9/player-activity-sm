@@ -37,7 +37,7 @@
 	
 	"Activity Purged"
 	{
-		"en"			"All players activity has been deleted."
+		"en"			"All players activity has been purged."
 	}
 	
 	"Activity Purge Unavailable"
