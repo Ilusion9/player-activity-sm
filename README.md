@@ -22,6 +22,7 @@ https://forums.alliedmods.net/showthread.php?p=2625964
 ```
 sm_activity - show the player's activity on the server
 sm_activityof <steamid> - show this steamid's activity on the server
+sm_activitypurge - delete all players activity
 ```
 
 # Example of output
