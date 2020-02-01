@@ -35,12 +35,12 @@
 	}
 	
 	
-	"Activity Purge"
+	"Activity Deleted"
 	{
 		"en"			"All players activity has been deleted."
 	}
 	
-	"Activity Purge Unavailable"
+	"Activity Delete Unavailable"
 	{
 		"en"			"Cannot delete all players activity due to an error. Please try later."
 	}
