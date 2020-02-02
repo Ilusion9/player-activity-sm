@@ -297,7 +297,7 @@ public void Database_ActivityPurge(Database db, DBResultSet rs, const char[] err
 	DataPack pk = view_as<DataPack>(data);
 	pk.Reset();
 	
-	int client = pk.ReadCell();
+	int userId = pk.ReadCell();
 	ReplySource commandSource = pk.ReadCell();
 	delete pk;
 	
