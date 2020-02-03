@@ -38,7 +38,6 @@ public void OnPluginStart()
 	
 	RegConsoleCmd("sm_activity", Command_Activity);
 	RegAdminCmd("sm_activityof", Command_ActivityOf, ADMFLAG_RCON);
-	RegAdminCmd("sm_activitypurge", Command_ActivityPurge, ADMFLAG_RCON);
 }
 
 public void Database_OnConnect(Database db, const char[] error, any data)
@@ -289,53 +288,6 @@ public void Database_GetActivityOf(Database db, DBResultSet rs, const char[] err
 	}
 	
 	ReplyToCommandSource(client, commandSource, "[SM] %t", "Activity Of", steamId, float(recentTime) / 3600, totalTime / 3600);
-}
-
-public Action Command_ActivityPurge(int client, int args)
-{
-	char cmdName[64];
-	GetCmdArg(0, cmdName, sizeof(cmdName));
-	
-	DataPack pk = new DataPack();
-	pk.WriteCell(client ? GetClientUserId(client) : 0);
-	pk.WriteCell(GetCmdReplySource());
-	pk.WriteString(cmdName);
-
-	g_Database.Query(Database_ActivityPurge, "TRUNCATE players_activity;", pk);
-	return Plugin_Handled;
-}
-
-public void Database_ActivityPurge(Database db, DBResultSet rs, const char[] error, any data)
-{
-	DataPack pk = view_as<DataPack>(data);
-	pk.Reset();
-	
-	int userId = pk.ReadCell();
-	ReplySource commandSource = pk.ReadCell();
-	char cmdName[64];
-	pk.ReadString(cmdName, sizeof(cmdName));
-	delete pk;
-	
-	int client = userId ? GetClientOfUserId(userId) : 0;
-	bool validClient = !userId || client;
-	
-	if (!rs)
-	{
-		if (validClient)
-		{
-			ReplyToCommandSource(client, commandSource, "[SM] %t", "Command Database Query Error", cmdName);
-		}
-		
-		LogError("Failed to query database: %s", error);
-		return;
-	}
-	
-	if (!validClient)
-	{
-		return;
-	}
-	
-	ReplyToCommandSource(client, commandSource, "[SM] %t", "Activity Purged");
 }
 
 public void Database_FastQuery(Database db, DBResultSet rs, const char[] error, any data)
