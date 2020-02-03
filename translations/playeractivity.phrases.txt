@@ -17,31 +17,30 @@
 		"en"			"{1} hours - total"
 	}
 	
-	"Activity Unavailable"
-	{
-		"en"			"Your activity is unavailable due to an error. Please try later."
-	}
-	
 	"Activity Of"
 	{
 		"#format"		"{1:s},{2:0.1f},{3:d}"
 		"en"			"{1} : {2} hours in the past month - {3} hours on record"
 	}
 	
-	"Activity Of Unavailable"
-	{
-		"#format"		"{1:s}"
-		"en"			"{1} : activity unavailable due to an error. Please try later."
-	}
-	
-	
 	"Activity Purged"
 	{
 		"en"			"All players activity has been purged."
 	}
 	
-	"Activity Purge Unavailable"
+	"Activity Database Query Error"
 	{
-		"en"			"Cannot purge all players activity due to an error. Please try later."
+		"en"			"Your activity is unavailable due to a database query error. Please contact the administrator."
+	}
+	
+	"Activity Steam Query Error"
+	{
+		"en"			"Your activity is unavailable due to a Steam error. Please try later."
+	}
+	
+	"Command Database Query Error"
+	{
+		"#format"		"{1:s}"
+		"en"			"The \"{1}\" command is unavailable due to a database query error."
 	}
 }
