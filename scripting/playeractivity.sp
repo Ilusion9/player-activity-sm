@@ -18,7 +18,7 @@ bool g_HasTimeFetched[MAXPLAYERS + 1];
 int g_RecentTime[MAXPLAYERS + 1];
 int g_TotalTime[MAXPLAYERS + 1];
 
-public APLRes AskPluginLoad2(Handle myself, bool late, char [] error, int err_max)
+public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
 	CreateNative("Activity_GetClientRecentTime", Native_GetClientRecentTime);
 	CreateNative("Activity_GetClientTotalTime", Native_GetClientTotalTime);
@@ -168,9 +168,15 @@ public Action Command_Activity(int client, int args)
 		return Plugin_Handled;
 	}
 	
+	if (!IsClientAuthorized(client))
+	{
+		ReplyToCommand(client, "[SM] %t", "Activity Steam Query Error");
+		return Plugin_Handled;
+	}
+	
 	if (!g_HasTimeFetched[client])
 	{
-		ReplyToCommand(client, "[SM] %t", "Activity Unavailable");
+		ReplyToCommand(client, "[SM] %t", "Activity Database Query Error");
 		return Plugin_Handled;
 	}
 	
@@ -223,9 +229,11 @@ public Action Command_ActivityOf(int client, int args)
 		return Plugin_Handled;
 	}
 	
+	char cmdName[64];
+	GetCmdArg(0, cmdName, sizeof(cmdName));
 	if (!g_Database)
 	{
-		ReplyToCommand(client, "[SM] %t", "Activity Of Unavailable", steamId);
+		ReplyToCommand(client, "[SM] %t", "Command Database Query Error", cmdName);
 		return Plugin_Handled;
 	}
 	
@@ -233,7 +241,8 @@ public Action Command_ActivityOf(int client, int args)
 	pk.WriteCell(client ? GetClientUserId(client) : 0);
 	pk.WriteCell(GetCmdReplySource());
 	pk.WriteString(arg);
-	
+	pk.WriteString(cmdName);
+
 	char query[256];
 	Format(query, sizeof(query), "SELECT sum(CASE WHEN date >= CURRENT_DATE - INTERVAL 1 MONTH THEN seconds END) as recentTime, sum(seconds) as totalTime FROM players_activity WHERE steamid = %d;", steamId);  
 	g_Database.Query(Database_GetActivityOf, query, pk);
@@ -248,9 +257,9 @@ public void Database_GetActivityOf(Database db, DBResultSet rs, const char[] err
 	
 	int userId = pk.ReadCell();
 	ReplySource commandSource = pk.ReadCell();
-	char steamId[64];
+	char steamId[64], cmdName[64];
 	pk.ReadString(steamId, sizeof(steamId));
-	
+	pk.ReadString(cmdName, sizeof(cmdName));
 	delete pk;
 	
 	int client = userId ? GetClientOfUserId(userId) : 0;
@@ -260,7 +269,7 @@ public void Database_GetActivityOf(Database db, DBResultSet rs, const char[] err
 	{
 		if (validClient)
 		{
-			ReplyToCommandSource(client, commandSource, "[SM] %t", "Activity Of Unavailable", steamId);
+			ReplyToCommandSource(client, commandSource, "[SM] %t", "Command Database Query Error", cmdName);
 		}
 		
 		LogError("Failed to query database: %s", error);
@@ -284,10 +293,14 @@ public void Database_GetActivityOf(Database db, DBResultSet rs, const char[] err
 
 public Action Command_ActivityPurge(int client, int args)
 {
+	char cmdName[64];
+	GetCmdArg(0, cmdName, sizeof(cmdName));
+	
 	DataPack pk = new DataPack();
 	pk.WriteCell(client ? GetClientUserId(client) : 0);
 	pk.WriteCell(GetCmdReplySource());
-	
+	pk.WriteString(cmdName);
+
 	g_Database.Query(Database_ActivityPurge, "TRUNCATE players_activity;", pk);
 	return Plugin_Handled;
 }
@@ -299,6 +312,8 @@ public void Database_ActivityPurge(Database db, DBResultSet rs, const char[] err
 	
 	int userId = pk.ReadCell();
 	ReplySource commandSource = pk.ReadCell();
+	char cmdName[64];
+	pk.ReadString(cmdName, sizeof(cmdName));
 	delete pk;
 	
 	int client = userId ? GetClientOfUserId(userId) : 0;
@@ -308,7 +323,7 @@ public void Database_ActivityPurge(Database db, DBResultSet rs, const char[] err
 	{
 		if (validClient)
 		{
-			ReplyToCommandSource(client, commandSource, "[SM] %t", "Activity Purge Unavailable");
+			ReplyToCommandSource(client, commandSource, "[SM] %t", "Command Database Query Error", cmdName);
 		}
 		
 		LogError("Failed to query database: %s", error);
