@@ -23,11 +23,6 @@
 		"en"			"{1} : {2} hours in the past month - {3} hours on record"
 	}
 	
-	"Activity Purged"
-	{
-		"en"			"All players activity has been purged."
-	}
-	
 	"Activity Database Query Error"
 	{
 		"en"			"Your activity is unavailable due to a database query error. Please contact the administrator."
