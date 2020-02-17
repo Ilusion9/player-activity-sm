@@ -14,14 +14,14 @@ public Plugin myinfo =
 Database g_Database;
 Handle g_Forward_ClientTime;
 
-bool g_IsPluginReloaded;
+bool g_IsPluginLateLoaded;
 bool g_HasTimeFetched[MAXPLAYERS + 1];
 int g_RecentTime[MAXPLAYERS + 1];
 int g_TotalTime[MAXPLAYERS + 1];
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
-	g_IsPluginReloaded = late;
+	g_IsPluginLateLoaded = late;
 	
 	CreateNative("Activity_GetClientRecentTime", Native_GetClientRecentTime);
 	CreateNative("Activity_GetClientTotalTime", Native_GetClientTotalTime);
@@ -44,7 +44,10 @@ public void OnPluginStart()
 
 public void OnConfigsExecuted()
 {
-	Database.Connect(Database_OnConnect, "playeractivity");
+	if (!g_Database)
+	{
+		Database.Connect(Database_OnConnect, "playeractivity");
+	}
 }
 
 public void Database_OnConnect(Database db, const char[] error, any data)
@@ -52,10 +55,6 @@ public void Database_OnConnect(Database db, const char[] error, any data)
 	if (!db)
 	{
 		LogError("Could not connect to the database: %s", error);
-		if (g_Database)
-		{
-			LogError("The plugin will keep the old database connection.");
-		}
 		return;
 	}
 	
@@ -66,25 +65,13 @@ public void Database_OnConnect(Database db, const char[] error, any data)
 	{
 		delete db;
 		LogError("Could not connect to the database: expected mysql database.");
-		if (g_Database)
-		{
-			LogError("The plugin will keep the old database connection.");
-		}
 		return;
 	}
 	
-	if (db.IsSameConnection(g_Database))
-	{
-		delete db;
-	}
-	else
-	{
-		delete g_Database;
-		g_Database = db;
-	}
-	
+	g_Database = db;
 	g_Database.Query(Database_FastQuery, "CREATE TABLE IF NOT EXISTS players_activity (steamid INT UNSIGNED, date DATE, seconds INT UNSIGNED, PRIMARY KEY (steamid, date));");
-	if (g_IsPluginReloaded)
+	
+	if (g_IsPluginLateLoaded)
 	{
 		for (int i = 1; i <= MaxClients; i++)
 		{
