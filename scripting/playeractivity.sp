@@ -14,12 +14,15 @@ public Plugin myinfo =
 Database g_Database;
 Handle g_Forward_ClientTime;
 
+bool g_IsPluginReloaded;
 bool g_HasTimeFetched[MAXPLAYERS + 1];
 int g_RecentTime[MAXPLAYERS + 1];
 int g_TotalTime[MAXPLAYERS + 1];
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
+	g_IsPluginReloaded = late;
+	
 	CreateNative("Activity_GetClientRecentTime", Native_GetClientRecentTime);
 	CreateNative("Activity_GetClientTotalTime", Native_GetClientTotalTime);
 	
@@ -33,11 +36,15 @@ public void OnPluginStart()
 	LoadTranslations("common.phrases");
 	LoadTranslations("playeractivity.phrases");
 	
-	Database.Connect(Database_OnConnect, "playeractivity");
 	g_Forward_ClientTime = CreateGlobalForward("Activity_OnFetchClientTime", ET_Event, Param_Cell, Param_Cell, Param_Cell);
 	
 	RegConsoleCmd("sm_activity", Command_Activity);
 	RegAdminCmd("sm_activityof", Command_ActivityOf, ADMFLAG_RCON);
+}
+
+public void OnConfigsExecuted()
+{
+	Database.Connect(Database_OnConnect, "playeractivity");
 }
 
 public void Database_OnConnect(Database db, const char[] error, any data)
@@ -45,6 +52,10 @@ public void Database_OnConnect(Database db, const char[] error, any data)
 	if (!db)
 	{
 		LogError("Could not connect to the database: %s", error);
+		if (g_Database)
+		{
+			LogError("The plugin will keep the old database connection.");
+		}
 		return;
 	}
 	
@@ -53,18 +64,34 @@ public void Database_OnConnect(Database db, const char[] error, any data)
 	
 	if (!StrEqual(buffer, "mysql", false))
 	{
-		LogError("Could not connect to the database: expected mysql database");
+		delete db;
+		LogError("Could not connect to the database: expected mysql database.");
+		if (g_Database)
+		{
+			LogError("The plugin will keep the old database connection.");
+		}
 		return;
 	}
 	
-	g_Database = db;
-	db.Query(Database_FastQuery, "CREATE TABLE IF NOT EXISTS players_activity (steamid INT UNSIGNED, date DATE, seconds INT UNSIGNED, PRIMARY KEY (steamid, date));");
-	
-	for (int i = 1; i <= MaxClients; i++)
+	if (db.IsSameConnection(g_Database))
 	{
-		if (IsClientInGame(i))
+		delete db;
+	}
+	else
+	{
+		delete g_Database;
+		g_Database = db;
+	}
+	
+	g_Database.Query(Database_FastQuery, "CREATE TABLE IF NOT EXISTS players_activity (steamid INT UNSIGNED, date DATE, seconds INT UNSIGNED, PRIMARY KEY (steamid, date));");
+	if (g_IsPluginReloaded)
+	{
+		for (int i = 1; i <= MaxClients; i++)
 		{
-			OnClientPostAdminCheck(i);
+			if (IsClientInGame(i))
+			{
+				OnClientPostAdminCheck(i);
+			}
 		}
 	}
 }
@@ -84,7 +111,12 @@ public void OnMapEnd()
 	data.AddQuery("INSERT INTO players_activity SELECT * FROM players_activity_temp;");
 	data.AddQuery("DROP TABLE players_activity_temp;");
 	
-	g_Database.Execute(data);
+	g_Database.Execute(data, _, Database_MergeDataError);
+}
+
+public void Database_MergeDataError(Database db, any data, int numQueries, const char[] error, int failIndex, any[] queryData)
+{
+	LogError("Failed to query database (transaction): %s", error);
 }
 
 public void OnClientConnected(int client)
@@ -112,9 +144,9 @@ public void OnClientPostAdminCheck(int client)
 	g_Database.Query(Database_GetClientActivity, query, GetClientUserId(client));
 }
 
-public void Database_GetClientActivity(Database db, DBResultSet rs, const char[] error, any data)
+public void Database_GetClientActivity(Database db, DBResultSet results, const char[] error, any data)
 {
-	if (!rs)
+	if (!results)
 	{
 		LogError("Failed to query database: %s", error);
 		return;
@@ -126,10 +158,10 @@ public void Database_GetClientActivity(Database db, DBResultSet rs, const char[]
 		return;
 	}
 	
-	if (rs.FetchRow())
+	if (results.FetchRow())
 	{
-		g_RecentTime[client] = rs.FetchInt(0);
-		g_TotalTime[client] = rs.FetchInt(1);
+		g_RecentTime[client] = results.FetchInt(0);
+		g_TotalTime[client] = results.FetchInt(1);
 	}
 	
 	g_HasTimeFetched[client] = true;
@@ -249,7 +281,7 @@ public Action Command_ActivityOf(int client, int args)
 	return Plugin_Handled;
 }
 
-public void Database_GetActivityOf(Database db, DBResultSet rs, const char[] error, any data)
+public void Database_GetActivityOf(Database db, DBResultSet results, const char[] error, any data)
 {
 	DataPack pk = view_as<DataPack>(data);
 	pk.Reset();
@@ -264,7 +296,7 @@ public void Database_GetActivityOf(Database db, DBResultSet rs, const char[] err
 	int client = userId ? GetClientOfUserId(userId) : 0;
 	bool validClient = !userId || client;
 	
-	if (!rs)
+	if (!results)
 	{
 		if (validClient)
 		{
@@ -281,18 +313,18 @@ public void Database_GetActivityOf(Database db, DBResultSet rs, const char[] err
 	}
 	
 	int recentTime, totalTime;
-	if (rs.FetchRow())
+	if (results.FetchRow())
 	{
-		recentTime = rs.FetchInt(0);
-		totalTime = rs.FetchInt(1);
+		recentTime = results.FetchInt(0);
+		totalTime = results.FetchInt(1);
 	}
 	
 	ReplyToCommandSource(client, commandSource, "[SM] %t", "Activity Of", steamId, float(recentTime) / 3600, totalTime / 3600);
 }
 
-public void Database_FastQuery(Database db, DBResultSet rs, const char[] error, any data)
+public void Database_FastQuery(Database db, DBResultSet results, const char[] error, any data)
 {
-	if (!rs)
+	if (!results)
 	{	
 		LogError("Failed to query database: %s", error);
 	}
