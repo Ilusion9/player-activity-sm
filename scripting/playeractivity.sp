@@ -14,14 +14,14 @@ public Plugin myinfo =
 Database g_Database;
 Handle g_Forward_ClientTime;
 
-bool g_IsPluginLateLoaded;
+bool g_IsPluginLoadedLate;
 bool g_HasTimeFetched[MAXPLAYERS + 1];
 int g_RecentTime[MAXPLAYERS + 1];
 int g_TotalTime[MAXPLAYERS + 1];
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
-	g_IsPluginLateLoaded = late;
+	g_IsPluginLoadedLate = late;
 	
 	CreateNative("Activity_GetClientRecentTime", Native_GetClientRecentTime);
 	CreateNative("Activity_GetClientTotalTime", Native_GetClientTotalTime);
@@ -71,7 +71,7 @@ public void Database_OnConnect(Database db, const char[] error, any data)
 	g_Database = db;
 	g_Database.Query(Database_FastQuery, "CREATE TABLE IF NOT EXISTS players_activity (steamid INT UNSIGNED, date DATE, seconds INT UNSIGNED, PRIMARY KEY (steamid, date));");
 	
-	if (g_IsPluginLateLoaded)
+	if (g_IsPluginLoadedLate)
 	{
 		for (int i = 1; i <= MaxClients; i++)
 		{
@@ -287,7 +287,7 @@ public void Database_GetActivityOf(Database db, DBResultSet results, const char[
 	{
 		if (validClient)
 		{
-			ReplyToCommandSource(client, commandSource, "[SM] %t", "Command Database Query Error", cmdName);
+			ReplyToCommandEx(client, commandSource, "[SM] %t", "Command Database Query Error", cmdName);
 		}
 		
 		LogError("Failed to query database: %s", error);
@@ -306,7 +306,7 @@ public void Database_GetActivityOf(Database db, DBResultSet results, const char[
 		totalTime = results.FetchInt(1);
 	}
 	
-	ReplyToCommandSource(client, commandSource, "[SM] %t", "Activity Of", steamId, float(recentTime) / 3600, totalTime / 3600);
+	ReplyToCommandEx(client, commandSource, "[SM] %t", "Activity Of", steamId, float(recentTime) / 3600, totalTime / 3600);
 }
 
 public void Database_FastQuery(Database db, DBResultSet results, const char[] error, any data)
@@ -342,7 +342,7 @@ int ConvertSteamIdIntoAccountId(const char[] steamId)
 	return StringToInt(steamId[10]) * 2 + (steamId[8] - 48);
 }
 
-void ReplyToCommandSource(int client, ReplySource commandSource, const char[] format, any ...)
+void ReplyToCommandEx(int client, ReplySource commandSource, const char[] format, any ...)
 {
 	char buffer[254];
 	SetGlobalTransTarget(client);
