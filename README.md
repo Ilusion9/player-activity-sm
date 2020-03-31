@@ -1,6 +1,9 @@
 # Description
 This plugin will display informations about the players activity on the server.
 
+# Dependencies
+Sourcecolors (include file) - https://github.com/Ilusion9/sourcecolors-inc-sm
+
 # Alliedmods
 https://forums.alliedmods.net/showthread.php?p=2625964
 
