@@ -1,5 +1,6 @@
 #include <sourcemod>
 #include <regex>
+#include <sourcecolors>
 #pragma newdecls required
 
 public Plugin myinfo =
@@ -93,7 +94,7 @@ public void OnMapEnd()
 	/* Merge players data older than one month */
 	Transaction data = new Transaction();
 	
-	data.AddQuery("CREATE TEMPORARY TABLE players_activity_temp SELECT steamid, min(date), sum(seconds) FROM players_activity WHERE date < CURRENT_DATE - INTERVAL 1 MONTH GROUP BY steamid;");
+	data.AddQuery("CREATE TEMPORARY TABLE players_activity_temp SELECT steamid, DATE_ADD(DATE_FORMAT(date, \"%Y-%m\"), LAST_DAY(date)) as month_date, sum(seconds) FROM players_activity WHERE date < CURRENT_DATE - INTERVAL 1 MONTH GROUP BY steamid, month_date;");
 	data.AddQuery("DELETE FROM players_activity WHERE date < CURRENT_DATE - INTERVAL 1 MONTH;");
 	data.AddQuery("INSERT INTO players_activity SELECT * FROM players_activity_temp;");
 	data.AddQuery("DROP TABLE players_activity_temp;");
@@ -182,7 +183,6 @@ public Action Command_Activity(int client, int args)
 {
 	if (!client)
 	{
-		ReplyToCommand(client, "[SM] %t", "Command is in-game only");
 		return Plugin_Handled;
 	}
 	
@@ -198,27 +198,12 @@ public Action Command_Activity(int client, int args)
 		return Plugin_Handled;
 	}
 	
-	Panel panel = new Panel();
-	char buffer[128];
 	int mapTime = GetClientMapTime(client);
+	float recentTime = float(g_RecentTime[client] + mapTime) / 3600;
+	int totalTime = (g_TotalTime[client] + mapTime) / 3600;
 	
-	Format(buffer, sizeof(buffer), "%T", "Activity Title", client);
-	panel.SetTitle(buffer);
-	
-	Format(buffer, sizeof(buffer), "%T", "Activity Recent", client, float(g_RecentTime[client] + mapTime) / 3600);
-	panel.DrawText(buffer);
-	
-	Format(buffer, sizeof(buffer), "%T", "Activity Total", client, (g_TotalTime[client] + mapTime) / 3600);
-	panel.DrawText(buffer);
-	
-	panel.DrawItem("", ITEMDRAW_SPACER);
-	panel.CurrentKey = GetMaxPageItems(panel.Style);
-	
-	Format(buffer, sizeof(buffer), "%T", "Exit", client);
-	panel.DrawItem(buffer, ITEMDRAW_CONTROL);
-	
-	panel.Send(client, Panel_DoNothing, MENU_TIME_FOREVER);
-	delete panel;
+	CReplyToCommand(client, "%t", "Activity Recent", recentTime);
+	CReplyToCommand(client, "%t", "Activity Total", totalTime);
 	
 	return Plugin_Handled;
 }
