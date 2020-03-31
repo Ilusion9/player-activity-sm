@@ -1,20 +1,15 @@
 "Phrases"
 {
-	"Activity Title"
-	{
-		"en"			"Activity"
-	}
-
 	"Activity Recent"
 	{
 		"#format"		"{1:0.1f}"
-		"en"			"{1} hours - past month"
+		"en"			"{$green}{1} hours{$default} - past month"
 	}
 	
 	"Activity Total"
 	{
 		"#format"		"{1:d}"
-		"en"			"{1} hours - total"
+		"en"			"{$green}{1} hours{$default} - on record"
 	}
 	
 	"Activity Of"
