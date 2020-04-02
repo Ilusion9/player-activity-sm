@@ -94,7 +94,7 @@ public void OnMapEnd()
 	/* Merge players data older than one month */
 	Transaction data = new Transaction();
 	
-	data.AddQuery("CREATE TEMPORARY TABLE players_activity_temp SELECT steamid, DATE_ADD(DATE_FORMAT(date, \"%Y-%m\"), LAST_DAY(date)) as month_date, sum(seconds) FROM players_activity WHERE date < CURRENT_DATE - INTERVAL 1 MONTH GROUP BY steamid, month_date;");
+	data.AddQuery("CREATE TEMPORARY TABLE players_activity_temp SELECT steamid, DATE_ADD(DATE_FORMAT(date, \"%Y-%m-00\"), INTERVAL LAST_DAY(date) DAY) as month_date, sum(seconds) FROM players_activity WHERE date < CURRENT_DATE - INTERVAL 1 MONTH AND date > CURRENT_DATE - INTERVAL 1 YEAR GROUP BY steamid, month_date;");
 	data.AddQuery("DELETE FROM players_activity WHERE date < CURRENT_DATE - INTERVAL 1 MONTH;");
 	data.AddQuery("INSERT INTO players_activity SELECT * FROM players_activity_temp;");
 	data.AddQuery("DROP TABLE players_activity_temp;");
